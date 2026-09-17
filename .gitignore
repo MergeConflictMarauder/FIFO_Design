@@ -1,0 +1,34 @@
+# Editor temporary files
+*~
+*.swp
+*.swo
+
+# VS Code local settings
+.vscode/
+
+# Synopsys VCS generated files
+simv
+simv.daidir/
+csrc/
+ucli.key
+DVEfiles/
+
+# Waveforms
+*.vcd
+*.vpd
+*.fsdb
+
+# Logs
+*.log
+
+# Synopsys generated files
+*.svf
+default.svf
+
+# Common work libraries
+WORK/
+work/
+alib-*/
+
+# Temporary files
+*.tmp
