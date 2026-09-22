@@ -3,7 +3,7 @@
 
 // Pointer synchroniser, instantiated once per direction
 module sync_clock
-    import gray_converter::gray2bin, gray_converter::GRAY_W;
+    import gray_converter::gray2bin;
 #(
     parameter int PTR_WIDTH = 5
 )(
@@ -27,7 +27,7 @@ module sync_clock
         end
     end
 
-    assign ptr_bin_out = PTR_WIDTH'(gray2bin(GRAY_W'(ff2)));
+    assign ptr_bin_out = gray2bin(ff2);
 
 endmodule
 

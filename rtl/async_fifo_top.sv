@@ -10,7 +10,7 @@ module async_fifo_top #(
 )(
     input  logic              wr_clk,
     input  logic              rd_clk,
-    input  logic              rst_n,            // asynchronous, active low
+    input  logic              rst_n,        // asynchronous, active low
     input  logic              wr_en,
     input  logic              rd_en,
     input  logic [WIDTH-1:0]  wr_data,
@@ -25,7 +25,7 @@ module async_fifo_top #(
     localparam int ADDR_WIDTH = $clog2(DEPTH);      // ceiling of log2(DEPTH), address width
     localparam int PTR_WIDTH  = ADDR_WIDTH + 1;     // pointer width, to distinguish full from empty
 
-    // Elaboration-time parameter checks
+    // Parameter checks
     initial begin
         if (DEPTH < 2 || DEPTH != (1 << ADDR_WIDTH))
             $error("async_fifo_top: DEPTH (%0d) must be a power of two, >= 2", DEPTH);
@@ -35,7 +35,6 @@ module async_fifo_top #(
             $error("async_fifo_top: AE_THRESH (%0d) must be in 0..DEPTH-1", AE_THRESH);
     end
 
-    // Reset synchronisers for the two clock domains
     // The FIFO is reset when rst_n is low, and comes out of reset synchronously to each clock
     logic rst_n_wr, rst_n_rd;
 
@@ -43,15 +42,12 @@ module async_fifo_top #(
     sync_reset u_rst_rd (.clk(rd_clk), .rst_n_in(rst_n), .rst_n_out(rst_n_rd));
 
     // Write and read pointers, Gray-coded for the CDC
-    // The write pointer is synchronised into the read domain and vice versa
     logic [PTR_WIDTH-1:0] wr_to_gray,  wr_ptr_sync;
     logic [PTR_WIDTH-1:0] rd_to_gray,  rd_ptr_sync;
 
     // The read and write addresses are the lower bits of the pointers,
-    // which are one bit wider than the address to distinguish full from empty
     logic [ADDR_WIDTH-1:0] wr_addr, rd_addr;
     logic                  wr_en_gate, rd_en_gate;
-    logic [PTR_WIDTH-1:0]  num_content_w, num_content_r;
 
     write_handler #(
         .ADDR_WIDTH (ADDR_WIDTH),
@@ -65,7 +61,6 @@ module async_fifo_top #(
         .is_full     (full),
         .is_almost   (almost_full),
         .wr_addr     (wr_addr),
-        .num_content (num_content_w),
         .wr_to_gray  (wr_to_gray)       // to the read domain
     );
 
@@ -81,7 +76,6 @@ module async_fifo_top #(
         .is_empty    (empty),
         .is_almost   (almost_empty),
         .rd_addr     (rd_addr),
-        .num_content (num_content_r),
         .rd_to_gray  (rd_to_gray)       // to the write domain
     );
 

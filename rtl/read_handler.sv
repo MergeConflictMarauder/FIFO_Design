@@ -3,7 +3,7 @@
 
 // Read-side pointer, empty flag and almost-empty flag
 module read_handler
-    import gray_converter::bin2gray, gray_converter::GRAY_W;
+    import gray_converter::bin2gray;
 #(
     parameter int ADDR_WIDTH = 4,
     parameter int AE_THRESH  = 4     // almost_empty asserts at <= this occupancy
@@ -17,7 +17,6 @@ module read_handler
     output logic                  is_empty,
     output logic                  is_almost,
     output logic [ADDR_WIDTH-1:0] rd_addr,
-    output logic [ADDR_WIDTH:0]   num_content,  // occupancy seen by this domain
     output logic [ADDR_WIDTH:0]   rd_to_gray    // read pointer, Gray coded, to the CDC
 );
 
@@ -38,13 +37,9 @@ module read_handler
     // Empty when both pointers match, wrap bit included
     assign empty = (next_read == write_ptr);
 
-    // Almost empty when the occupancy after the pending read is <= the threshold
-    assign counter = write_ptr - next_read;
+    // Almost empty after the pending read is less than or equal to the threshold
+    assign counter = write_ptr - next_read;     // i.e 0_1100 - 0_1000 = 4, 1_0000 - 0_1100 = 4
     assign almost_empty = (counter <= AE_LEVEL);
-
-    // Number of entries calculated from the current read pointer
-    // i.e 0_1100 - 0_1000 = 4, 1_0000 - 0_1100 = 4
-    assign num_content = write_ptr - read_ptr;
 
     // Assign the lower bits of the pointer to the memory address
     assign rd_addr = read_ptr[ADDR_WIDTH-1:0];
@@ -60,7 +55,7 @@ module read_handler
             read_ptr   <= next_read;
             is_empty   <= empty;
             is_almost  <= almost_empty;
-            rd_to_gray <= PTR_WIDTH'(bin2gray(GRAY_W'(next_read)));
+            rd_to_gray <= bin2gray(next_read);
         end
     end
 

@@ -3,8 +3,8 @@
 
 // One write port, one read port, independent clocks
 module dual_port_memory #(
-    parameter int WIDTH = 8,    // data word width
-    parameter int ADDR_WIDTH = 4     // address width, 2**4 = 16 entries
+    parameter int WIDTH = 8,            // data word width
+    parameter int ADDR_WIDTH = 4        // address width, 2**4 = 16 entries
 )(
     input  logic                  wr_clk,
     input  logic                  rd_clk,
