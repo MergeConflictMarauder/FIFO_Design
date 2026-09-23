@@ -42,8 +42,8 @@ module async_fifo_top #(
     sync_reset u_rst_rd (.clk(rd_clk), .rst_n_in(rst_n), .rst_n_out(rst_n_rd));
 
     // Write and read pointers, Gray-coded for the CDC
-    logic [PTR_WIDTH-1:0] wr_to_gray,  wr_ptr_sync;
-    logic [PTR_WIDTH-1:0] rd_to_gray,  rd_ptr_sync;
+    logic [PTR_WIDTH-1:0] wr_to_gray,  wr_from_gray;
+    logic [PTR_WIDTH-1:0] rd_to_gray,  rd_from_gray;
 
     // The read and write addresses are the lower bits of the pointers,
     logic [ADDR_WIDTH-1:0] wr_addr, rd_addr;
@@ -56,7 +56,7 @@ module async_fifo_top #(
         .clk         (wr_clk),
         .rst_n       (rst_n_wr),
         .enable      (wr_en),
-        .read_ptr    (rd_ptr_sync),     // from the read domain
+        .read_ptr    (rd_from_gray),    // from the read domain
         .wr_en       (wr_en_gate),
         .is_full     (full),
         .is_almost   (almost_full),
@@ -71,7 +71,7 @@ module async_fifo_top #(
         .clk         (rd_clk),
         .rst_n       (rst_n_rd),
         .enable      (rd_en),
-        .write_ptr   (wr_ptr_sync),     // from the write domain
+        .write_ptr   (wr_from_gray),    // from the write domain
         .rd_en       (rd_en_gate),
         .is_empty    (empty),
         .is_almost   (almost_empty),
@@ -86,7 +86,7 @@ module async_fifo_top #(
         .clk         (rd_clk),
         .rst_n       (rst_n_rd),
         .ptr_gray_in (wr_to_gray),
-        .ptr_bin_out (wr_ptr_sync)
+        .ptr_bin_out (wr_from_gray)
     );
 
     // Read pointer into the write domain.
@@ -96,7 +96,7 @@ module async_fifo_top #(
         .clk         (wr_clk),
         .rst_n       (rst_n_wr),
         .ptr_gray_in (rd_to_gray),
-        .ptr_bin_out (rd_ptr_sync)
+        .ptr_bin_out (rd_from_gray)
     );
 
     dual_port_memory #(
