@@ -7,7 +7,7 @@ Report : timing
         -max_paths 10
 Design : async_fifo_top
 Version: V-2023.12-SP5-1
-Date   : Thu Sep 24 19:13:05 2026
+Date   : Thu Sep 24 19:34:19 2026
 ****************************************
 
 Operating Conditions: typical   Library: gscl45nm

@@ -190,15 +190,6 @@ redirect reports/constraints.rep {
     report_constraint -all_violators
 }
 
-# Max-capacitance detail: real values and driving pins of each
-# violation, plus the library limits on the flip-flop outputs.
-# An empty value after the colon means the library sets no limit.
-redirect reports/max_cap.rep {
-    report_constraint -all_violators -max_capacitance -significant_digits 5 -verbose
-    echo "DFFSR/Q max_capacitance:    [get_attribute [get_lib_pins gscl45nm/DFFSR/Q] max_capacitance]"
-    echo "DFFPOSX1/Q max_capacitance: [get_attribute [get_lib_pins gscl45nm/DFFPOSX1/Q] max_capacitance]"
-}
-
 # Timing sanity check
 redirect reports/check_timing.rep {
     check_timing
