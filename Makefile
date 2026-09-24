@@ -1,8 +1,8 @@
-```make
 VCS       = vcs
 VCS_FLAGS = -sverilog -full64 -kdb -debug_access+all
 TOP       = tb_async_fifo
 SIM       = simv
+FSDB      = async_fifo.fsdb
 
 # Add/remove RTL source files here as needed.
 # gray_converter.sv must come first: the other RTL files import its package.
@@ -16,8 +16,7 @@ RTL       = rtl/gray_converter.sv \
 
 TB        = tb/tb_async_fifo.sv
 
-.PHONY: all compile empty_full almost_flags simultaneous \
-        waves_empty_full waves_almost_flags waves_simultaneous clean
+.PHONY: all compile empty_full almost_flags simultaneous waves clean
 
 # Default: compile the design
 all: compile
@@ -37,19 +36,10 @@ simultaneous:
 	./$(SIM) -exitstatus +TEST=simultaneous
 
 # Run tests and open their waveform in Verdi
-waves_empty_full:
-	./$(SIM) +TEST=empty_full
-	verdi -dbdir $(SIM).daidir -ssf empty_full.fsdb
-
-waves_almost_flags:
-	./$(SIM) +TEST=almost_flags
-	verdi -dbdir $(SIM).daidir -ssf almost_flags.fsdb
-
-waves_simultaneous:
-	./$(SIM) +TEST=simultaneous
-	verdi -dbdir $(SIM).daidir -ssf simultaneous.fsdb
+waves:
+	./$(SIM) +TEST=$(TEST)
+	verdi -dbdir $(SIM).daidir -ssf $(FSDB)
 
 clean:
-	rm -rf $(SIM) $(SIM).daidir csrc ucli.key DVEfiles \
-	       novas_dump.log *.fsdb *.log *.vpd
-```
+	rm -rf $(SIM) $(SIM).daidir csrc ucli.key DVEfiles novas_dump.log \
+	       *.fsdb *.log *.vpd

@@ -29,6 +29,8 @@ vc_hdrs.h
 
 # VCS / Verdi generated files
 novas_dump.log
+novas.conf
+novas.rc
 verdiLog/
 VerdiLog/
 *.vpd
