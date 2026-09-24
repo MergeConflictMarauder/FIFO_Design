@@ -1,0 +1,381 @@
+ 
+****************************************
+Report : timing
+        -path full
+        -delay max
+        -group WR_CLK
+        -max_paths 10
+Design : async_fifo_top
+Version: V-2023.12-SP5-1
+Date   : Thu Sep 24 18:05:40 2026
+****************************************
+
+Operating Conditions: typical   Library: gscl45nm
+Wire Load Model Mode: top
+
+  Startpoint: u_sync_rd2wr/ff2_reg[3]
+              (rising edge-triggered flip-flop clocked by WR_CLK)
+  Endpoint: u_wr/is_almost_reg
+            (rising edge-triggered flip-flop clocked by WR_CLK)
+  Path Group: WR_CLK
+  Path Type: max
+
+  Point                                    Incr       Path
+  -----------------------------------------------------------
+  clock WR_CLK (rise edge)                 0.00       0.00
+  clock network delay (ideal)              0.00       0.00
+  u_sync_rd2wr/ff2_reg[3]/CLK (DFFSR)      0.00       0.00 r
+  u_sync_rd2wr/ff2_reg[3]/Q (DFFSR)        0.11       0.11 f
+  U387/Y (BUFX2)                           0.04       0.15 f
+  u_sync_rd2wr/U16/Y (XOR2X1)              0.08       0.23 r
+  u_sync_rd2wr/U15/Y (XOR2X1)              0.08       0.31 r
+  u_sync_rd2wr/U14/Y (XOR2X1)              0.08       0.39 r
+  u_sync_rd2wr/U13/Y (XOR2X1)              0.07       0.46 r
+  U485/Y (INVX1)                           0.03       0.49 f
+  U484/Y (OR2X1)                           0.05       0.54 f
+  u_wr/sub_42/U2_1/YC (FAX1)               0.08       0.62 f
+  u_wr/sub_42/U2_2/YC (FAX1)               0.08       0.70 f
+  u_wr/sub_42/U2_3/YC (FAX1)               0.08       0.78 f
+  u_wr/sub_42/U2_4/YS (FAX1)               0.07       0.85 r
+  U686/Y (AOI21X1)                         0.01       0.87 f
+  U693/Y (BUFX2)                           0.03       0.90 f
+  U514/Y (INVX1)                           0.00       0.90 r
+  u_wr/is_almost_reg/D (DFFSR)             0.00       0.90 r
+  data arrival time                                   0.90
+
+  clock WR_CLK (rise edge)                10.00      10.00
+  clock network delay (ideal)              0.00      10.00
+  u_wr/is_almost_reg/CLK (DFFSR)           0.00      10.00 r
+  library setup time                      -0.07       9.93
+  data required time                                  9.93
+  -----------------------------------------------------------
+  data required time                                  9.93
+  data arrival time                                  -0.90
+  -----------------------------------------------------------
+  slack (MET)                                         9.03
+
+
+  Startpoint: u_wr/is_full_reg
+              (rising edge-triggered flip-flop clocked by WR_CLK)
+  Endpoint: u_wr/is_full_reg
+            (rising edge-triggered flip-flop clocked by WR_CLK)
+  Path Group: WR_CLK
+  Path Type: max
+
+  Point                                    Incr       Path
+  -----------------------------------------------------------
+  clock WR_CLK (rise edge)                 0.00       0.00
+  clock network delay (ideal)              0.00       0.00
+  u_wr/is_full_reg/CLK (DFFSR)             0.00       0.00 r
+  u_wr/is_full_reg/Q (DFFSR)               0.11       0.11 f
+  U246/Y (BUFX2)                           0.03       0.15 f
+  U520/Y (INVX1)                           0.00       0.14 r
+  U519/Y (AND2X1)                          0.08       0.23 r
+  U15/Y (AND2X1)                           0.05       0.28 r
+  U16/Y (AND2X1)                           0.06       0.34 r
+  U321/Y (AND2X1)                          0.06       0.39 r
+  U320/Y (AND2X1)                          0.05       0.44 r
+  U685/Y (XOR2X1)                          0.14       0.58 r
+  u_wr/U22/Y (XOR2X1)                      0.07       0.65 r
+  u_wr/U20/Y (NAND3X1)                     0.02       0.67 f
+  U362/Y (BUFX2)                           0.03       0.70 f
+  u_wr/U17/Y (NOR3X1)                      0.05       0.75 r
+  u_wr/is_full_reg/D (DFFSR)               0.00       0.75 r
+  data arrival time                                   0.75
+
+  clock WR_CLK (rise edge)                10.00      10.00
+  clock network delay (ideal)              0.00      10.00
+  u_wr/is_full_reg/CLK (DFFSR)             0.00      10.00 r
+  library setup time                      -0.09       9.91
+  data required time                                  9.91
+  -----------------------------------------------------------
+  data required time                                  9.91
+  data arrival time                                  -0.75
+  -----------------------------------------------------------
+  slack (MET)                                         9.17
+
+
+  Startpoint: u_wr/is_full_reg
+              (rising edge-triggered flip-flop clocked by WR_CLK)
+  Endpoint: u_wr/wr_to_gray_reg[3]
+            (rising edge-triggered flip-flop clocked by WR_CLK)
+  Path Group: WR_CLK
+  Path Type: max
+
+  Point                                    Incr       Path
+  -----------------------------------------------------------
+  clock WR_CLK (rise edge)                 0.00       0.00
+  clock network delay (ideal)              0.00       0.00
+  u_wr/is_full_reg/CLK (DFFSR)             0.00       0.00 r
+  u_wr/is_full_reg/Q (DFFSR)               0.11       0.11 f
+  U246/Y (BUFX2)                           0.03       0.15 f
+  U520/Y (INVX1)                           0.00       0.14 r
+  U519/Y (AND2X1)                          0.08       0.23 r
+  U15/Y (AND2X1)                           0.05       0.28 r
+  U16/Y (AND2X1)                           0.06       0.34 r
+  U321/Y (AND2X1)                          0.06       0.39 r
+  U320/Y (AND2X1)                          0.05       0.44 r
+  U685/Y (XOR2X1)                          0.14       0.58 r
+  u_wr/U27/Y (XOR2X1)                      0.05       0.63 r
+  u_wr/wr_to_gray_reg[3]/D (DFFSR)         0.00       0.63 r
+  data arrival time                                   0.63
+
+  clock WR_CLK (rise edge)                10.00      10.00
+  clock network delay (ideal)              0.00      10.00
+  u_wr/wr_to_gray_reg[3]/CLK (DFFSR)       0.00      10.00 r
+  library setup time                      -0.08       9.92
+  data required time                                  9.92
+  -----------------------------------------------------------
+  data required time                                  9.92
+  data arrival time                                  -0.63
+  -----------------------------------------------------------
+  slack (MET)                                         9.28
+
+
+  Startpoint: u_wr/is_full_reg
+              (rising edge-triggered flip-flop clocked by WR_CLK)
+  Endpoint: u_wr/write_ptr_reg[4]
+            (rising edge-triggered flip-flop clocked by WR_CLK)
+  Path Group: WR_CLK
+  Path Type: max
+
+  Point                                    Incr       Path
+  -----------------------------------------------------------
+  clock WR_CLK (rise edge)                 0.00       0.00
+  clock network delay (ideal)              0.00       0.00
+  u_wr/is_full_reg/CLK (DFFSR)             0.00       0.00 r
+  u_wr/is_full_reg/Q (DFFSR)               0.11       0.11 f
+  U246/Y (BUFX2)                           0.03       0.15 f
+  U520/Y (INVX1)                           0.00       0.14 r
+  U519/Y (AND2X1)                          0.08       0.23 r
+  U15/Y (AND2X1)                           0.05       0.28 r
+  U16/Y (AND2X1)                           0.06       0.34 r
+  U321/Y (AND2X1)                          0.06       0.39 r
+  U320/Y (AND2X1)                          0.05       0.44 r
+  U685/Y (XOR2X1)                          0.14       0.58 r
+  u_wr/write_ptr_reg[4]/D (DFFSR)          0.00       0.58 r
+  data arrival time                                   0.58
+
+  clock WR_CLK (rise edge)                10.00      10.00
+  clock network delay (ideal)              0.00      10.00
+  u_wr/write_ptr_reg[4]/CLK (DFFSR)        0.00      10.00 r
+  library setup time                      -0.13       9.87
+  data required time                                  9.87
+  -----------------------------------------------------------
+  data required time                                  9.87
+  data arrival time                                  -0.58
+  -----------------------------------------------------------
+  slack (MET)                                         9.29
+
+
+  Startpoint: u_wr/is_full_reg
+              (rising edge-triggered flip-flop clocked by WR_CLK)
+  Endpoint: u_wr/wr_to_gray_reg[4]
+            (rising edge-triggered flip-flop clocked by WR_CLK)
+  Path Group: WR_CLK
+  Path Type: max
+
+  Point                                    Incr       Path
+  -----------------------------------------------------------
+  clock WR_CLK (rise edge)                 0.00       0.00
+  clock network delay (ideal)              0.00       0.00
+  u_wr/is_full_reg/CLK (DFFSR)             0.00       0.00 r
+  u_wr/is_full_reg/Q (DFFSR)               0.11       0.11 f
+  U246/Y (BUFX2)                           0.03       0.15 f
+  U520/Y (INVX1)                           0.00       0.14 r
+  U519/Y (AND2X1)                          0.08       0.23 r
+  U15/Y (AND2X1)                           0.05       0.28 r
+  U16/Y (AND2X1)                           0.06       0.34 r
+  U321/Y (AND2X1)                          0.06       0.39 r
+  U320/Y (AND2X1)                          0.05       0.44 r
+  U685/Y (XOR2X1)                          0.14       0.58 r
+  u_wr/wr_to_gray_reg[4]/D (DFFSR)         0.00       0.58 r
+  data arrival time                                   0.58
+
+  clock WR_CLK (rise edge)                10.00      10.00
+  clock network delay (ideal)              0.00      10.00
+  u_wr/wr_to_gray_reg[4]/CLK (DFFSR)       0.00      10.00 r
+  library setup time                      -0.13       9.87
+  data required time                                  9.87
+  -----------------------------------------------------------
+  data required time                                  9.87
+  data arrival time                                  -0.58
+  -----------------------------------------------------------
+  slack (MET)                                         9.29
+
+
+  Startpoint: u_wr/is_full_reg
+              (rising edge-triggered flip-flop clocked by WR_CLK)
+  Endpoint: u_wr/wr_to_gray_reg[2]
+            (rising edge-triggered flip-flop clocked by WR_CLK)
+  Path Group: WR_CLK
+  Path Type: max
+
+  Point                                    Incr       Path
+  -----------------------------------------------------------
+  clock WR_CLK (rise edge)                 0.00       0.00
+  clock network delay (ideal)              0.00       0.00
+  u_wr/is_full_reg/CLK (DFFSR)             0.00       0.00 r
+  u_wr/is_full_reg/Q (DFFSR)               0.11       0.11 f
+  U246/Y (BUFX2)                           0.03       0.15 f
+  U520/Y (INVX1)                           0.00       0.14 r
+  U519/Y (AND2X1)                          0.08       0.23 r
+  U15/Y (AND2X1)                           0.05       0.28 r
+  U16/Y (AND2X1)                           0.06       0.34 r
+  U321/Y (AND2X1)                          0.06       0.39 r
+  U684/Y (XOR2X1)                          0.13       0.53 r
+  u_wr/U26/Y (XOR2X1)                      0.06       0.58 r
+  u_wr/wr_to_gray_reg[2]/D (DFFSR)         0.00       0.58 r
+  data arrival time                                   0.58
+
+  clock WR_CLK (rise edge)                10.00      10.00
+  clock network delay (ideal)              0.00      10.00
+  u_wr/wr_to_gray_reg[2]/CLK (DFFSR)       0.00      10.00 r
+  library setup time                      -0.08       9.92
+  data required time                                  9.92
+  -----------------------------------------------------------
+  data required time                                  9.92
+  data arrival time                                  -0.58
+  -----------------------------------------------------------
+  slack (MET)                                         9.33
+
+
+  Startpoint: u_wr/is_full_reg
+              (rising edge-triggered flip-flop clocked by WR_CLK)
+  Endpoint: u_wr/write_ptr_reg[3]
+            (rising edge-triggered flip-flop clocked by WR_CLK)
+  Path Group: WR_CLK
+  Path Type: max
+
+  Point                                    Incr       Path
+  -----------------------------------------------------------
+  clock WR_CLK (rise edge)                 0.00       0.00
+  clock network delay (ideal)              0.00       0.00
+  u_wr/is_full_reg/CLK (DFFSR)             0.00       0.00 r
+  u_wr/is_full_reg/Q (DFFSR)               0.11       0.11 f
+  U246/Y (BUFX2)                           0.03       0.15 f
+  U520/Y (INVX1)                           0.00       0.14 r
+  U519/Y (AND2X1)                          0.08       0.23 r
+  U15/Y (AND2X1)                           0.05       0.28 r
+  U16/Y (AND2X1)                           0.06       0.34 r
+  U321/Y (AND2X1)                          0.06       0.39 r
+  U684/Y (XOR2X1)                          0.13       0.53 r
+  u_wr/write_ptr_reg[3]/D (DFFSR)          0.00       0.53 r
+  data arrival time                                   0.53
+
+  clock WR_CLK (rise edge)                10.00      10.00
+  clock network delay (ideal)              0.00      10.00
+  u_wr/write_ptr_reg[3]/CLK (DFFSR)        0.00      10.00 r
+  library setup time                      -0.13       9.87
+  data required time                                  9.87
+  -----------------------------------------------------------
+  data required time                                  9.87
+  data arrival time                                  -0.53
+  -----------------------------------------------------------
+  slack (MET)                                         9.34
+
+
+  Startpoint: u_wr/is_full_reg
+              (rising edge-triggered flip-flop clocked by WR_CLK)
+  Endpoint: u_wr/wr_to_gray_reg[1]
+            (rising edge-triggered flip-flop clocked by WR_CLK)
+  Path Group: WR_CLK
+  Path Type: max
+
+  Point                                    Incr       Path
+  -----------------------------------------------------------
+  clock WR_CLK (rise edge)                 0.00       0.00
+  clock network delay (ideal)              0.00       0.00
+  u_wr/is_full_reg/CLK (DFFSR)             0.00       0.00 r
+  u_wr/is_full_reg/Q (DFFSR)               0.11       0.11 f
+  U246/Y (BUFX2)                           0.03       0.15 f
+  U520/Y (INVX1)                           0.00       0.14 r
+  U519/Y (AND2X1)                          0.08       0.23 r
+  U15/Y (AND2X1)                           0.05       0.28 r
+  U16/Y (AND2X1)                           0.06       0.34 r
+  U683/Y (XOR2X1)                          0.13       0.47 r
+  u_wr/U25/Y (XOR2X1)                      0.06       0.53 r
+  u_wr/wr_to_gray_reg[1]/D (DFFSR)         0.00       0.53 r
+  data arrival time                                   0.53
+
+  clock WR_CLK (rise edge)                10.00      10.00
+  clock network delay (ideal)              0.00      10.00
+  u_wr/wr_to_gray_reg[1]/CLK (DFFSR)       0.00      10.00 r
+  library setup time                      -0.08       9.92
+  data required time                                  9.92
+  -----------------------------------------------------------
+  data required time                                  9.92
+  data arrival time                                  -0.53
+  -----------------------------------------------------------
+  slack (MET)                                         9.39
+
+
+  Startpoint: u_wr/is_full_reg
+              (rising edge-triggered flip-flop clocked by WR_CLK)
+  Endpoint: u_wr/write_ptr_reg[2]
+            (rising edge-triggered flip-flop clocked by WR_CLK)
+  Path Group: WR_CLK
+  Path Type: max
+
+  Point                                    Incr       Path
+  -----------------------------------------------------------
+  clock WR_CLK (rise edge)                 0.00       0.00
+  clock network delay (ideal)              0.00       0.00
+  u_wr/is_full_reg/CLK (DFFSR)             0.00       0.00 r
+  u_wr/is_full_reg/Q (DFFSR)               0.11       0.11 f
+  U246/Y (BUFX2)                           0.03       0.15 f
+  U520/Y (INVX1)                           0.00       0.14 r
+  U519/Y (AND2X1)                          0.08       0.23 r
+  U15/Y (AND2X1)                           0.05       0.28 r
+  U16/Y (AND2X1)                           0.06       0.34 r
+  U683/Y (XOR2X1)                          0.13       0.47 r
+  u_wr/write_ptr_reg[2]/D (DFFSR)          0.00       0.47 r
+  data arrival time                                   0.47
+
+  clock WR_CLK (rise edge)                10.00      10.00
+  clock network delay (ideal)              0.00      10.00
+  u_wr/write_ptr_reg[2]/CLK (DFFSR)        0.00      10.00 r
+  library setup time                      -0.13       9.87
+  data required time                                  9.87
+  -----------------------------------------------------------
+  data required time                                  9.87
+  data arrival time                                  -0.47
+  -----------------------------------------------------------
+  slack (MET)                                         9.40
+
+
+  Startpoint: u_wr/is_full_reg
+              (rising edge-triggered flip-flop clocked by WR_CLK)
+  Endpoint: u_wr/wr_to_gray_reg[0]
+            (rising edge-triggered flip-flop clocked by WR_CLK)
+  Path Group: WR_CLK
+  Path Type: max
+
+  Point                                    Incr       Path
+  -----------------------------------------------------------
+  clock WR_CLK (rise edge)                 0.00       0.00
+  clock network delay (ideal)              0.00       0.00
+  u_wr/is_full_reg/CLK (DFFSR)             0.00       0.00 r
+  u_wr/is_full_reg/Q (DFFSR)               0.11       0.11 f
+  U246/Y (BUFX2)                           0.03       0.15 f
+  U520/Y (INVX1)                           0.00       0.14 r
+  U519/Y (AND2X1)                          0.08       0.23 r
+  U15/Y (AND2X1)                           0.05       0.28 r
+  U682/Y (XOR2X1)                          0.13       0.41 r
+  u_wr/U24/Y (XOR2X1)                      0.05       0.47 r
+  u_wr/wr_to_gray_reg[0]/D (DFFSR)         0.00       0.47 r
+  data arrival time                                   0.47
+
+  clock WR_CLK (rise edge)                10.00      10.00
+  clock network delay (ideal)              0.00      10.00
+  u_wr/wr_to_gray_reg[0]/CLK (DFFSR)       0.00      10.00 r
+  library setup time                      -0.08       9.92
+  data required time                                  9.92
+  -----------------------------------------------------------
+  data required time                                  9.92
+  data arrival time                                  -0.47
+  -----------------------------------------------------------
+  slack (MET)                                         9.45
+
+
+1

@@ -1,0 +1,21 @@
+ 
+****************************************
+Report : clocks
+Design : async_fifo_top
+Version: V-2023.12-SP5-1
+Date   : Thu Sep 24 18:05:40 2026
+****************************************
+
+Attributes:
+    d - dont_touch_network
+    f - fix_hold
+    p - propagated_clock
+    G - generated_clock
+    g - lib_generated_clock
+
+Clock          Period   Waveform            Attrs     Sources
+--------------------------------------------------------------------------------
+RD_CLK          10.00   {0 5}                         {rd_clk}
+WR_CLK          10.00   {0 5}                         {wr_clk}
+--------------------------------------------------------------------------------
+1
