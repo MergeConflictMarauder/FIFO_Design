@@ -46,7 +46,6 @@ set my_output_delay_ns 0.1
 #/* No modifications needed below                  */
 #/**************************************************/
 
-
 # OSU FreePDK 45nm library
 set OSU_FREEPDK [format "%s%s" \
     [getenv "PDK_DIR"] \
@@ -100,8 +99,6 @@ create_clock \
 # Asynchronous clock-domain crossing constraint
 
 # Write and read clocks are asynchronous.
-# Do NOT ask DC to close timing between these clock domains.
-
 set_clock_groups -asynchronous \
     -group [get_clocks WR_CLK] \
     -group [get_clocks RD_CLK]
@@ -113,33 +110,36 @@ set_driving_cell -lib_cell INVX1 [all_inputs]
 
 # Input/output timing assumptions
 
-# Remove both clock ports from normal input-delay constraints.
-set non_clock_inputs [remove_from_collection \
-    [all_inputs] \
-    [get_ports "$my_write_clock_pin $my_read_clock_pin"]]
+# Write-clock domain ports
+set my_write_inputs  [get_ports "wr_en wr_data*"]
+set my_write_outputs [get_ports "full almost_full"]
 
-
-# The generic constraints below are conservative.
+# Read-clock domain ports
+set my_read_inputs   [get_ports "rd_en"]
+set my_read_outputs  [get_ports "rd_data* empty almost_empty"]
 
 set_input_delay \
     $my_input_delay_ns \
     -clock WR_CLK \
-    $non_clock_inputs
+    $my_write_inputs
 
 set_input_delay \
     $my_input_delay_ns \
     -clock RD_CLK \
-    $non_clock_inputs
+    $my_read_inputs
 
 set_output_delay \
     $my_output_delay_ns \
     -clock WR_CLK \
-    [all_outputs]
+    $my_write_outputs
 
 set_output_delay \
     $my_output_delay_ns \
     -clock RD_CLK \
-    [all_outputs]
+    $my_read_outputs
+
+# rst_n is asynchronous and only drives the two reset synchronisers.
+set_false_path -from [get_ports rst_n]
 
 
 # Synthesis
