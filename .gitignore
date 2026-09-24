@@ -11,7 +11,8 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 
-# TerosHDL Python virtual environment
+# Virtual environment
+env.cshrc
 .teroshdl/venv/
 
 # TerosHDL local/generated files
