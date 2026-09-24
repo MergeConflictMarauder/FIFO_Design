@@ -6,17 +6,34 @@
 # VS Code local settings
 .vscode/
 
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# TerosHDL Python virtual environment
+.teroshdl/venv/
+
+# TerosHDL local/generated files
+.teroshdl/*.log
+.teroshdl/*/cache/
+.teroshdl/*/tmp/
+
 # Synopsys VCS generated files
 simv
 simv.daidir/
 csrc/
 ucli.key
 DVEfiles/
+vc_hdrs.h
 
-# Waveforms
-*.vcd
+# VCS / Verdi generated files
+novas_dump.log
+verdiLog/
+VerdiLog/
 *.vpd
 *.fsdb
+*.vcd
 
 # Logs
 *.log
@@ -29,6 +46,16 @@ default.svf
 WORK/
 work/
 alib-*/
+*.pvl
+*.syn
+*.mr
+*.ddc
+
+# Synthesis / implementation generated files
+*.spef
+*.sdf
 
 # Temporary files
 *.tmp
+*.bak
+*.old
