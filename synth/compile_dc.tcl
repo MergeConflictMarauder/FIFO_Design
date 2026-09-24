@@ -165,7 +165,7 @@ file mkdir reports
 # Timing reports
 
 # Write-clock domain
-redirect reports/write_timing.rpt {
+redirect reports/write_timing.rep {
     report_timing \
         -group WR_CLK \
         -delay_type max \
@@ -173,7 +173,7 @@ redirect reports/write_timing.rpt {
 }
 
 # Read-clock domain
-redirect reports/read_timing.rpt {
+redirect reports/read_timing.rep {
     report_timing \
         -group RD_CLK \
         -delay_type max \
@@ -181,34 +181,34 @@ redirect reports/read_timing.rpt {
 }
 
 # Clock information
-redirect reports/clocks.rpt {
+redirect reports/clocks.rep {
     report_clocks
 }
 
 # Constraint information
-redirect reports/constraints.rpt {
+redirect reports/constraints.rep {
     report_constraint -all_violators
 }
 
 # Timing sanity check
-redirect reports/check_timing.rpt {
+redirect reports/check_timing.rep {
     check_timing
 }
 
 
 # Area
 
-redirect reports/area.rpt {
+redirect reports/area.rep {
     report_area
 }
 
-redirect reports/area_hierarchy.rpt {
+redirect reports/area_hierarchy.rep {
     report_area -hierarchy
 }
 
 
 # Power
-redirect reports/power.rpt {
+redirect reports/power.rep {
     report_power
 }
 
