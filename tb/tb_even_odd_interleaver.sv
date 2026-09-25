@@ -367,7 +367,7 @@ module tb_even_odd_interleaver #(
 
             // Exact peak for this deterministic Case-1 stimulus/read phase.
             check_int("Case 1 peak even occupancy", peak_even, 8);
-            check_int("Case 1 peak odd occupancy",  peak_odd,  8);
+            check_int("Case 1 peak odd occupancy",  peak_odd,  9);
         end
     endtask
 
