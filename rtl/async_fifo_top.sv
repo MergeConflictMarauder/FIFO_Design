@@ -50,34 +50,32 @@ module async_fifo_top #(
     logic                  wr_en_gate, rd_en_gate;
 
     write_handler #(
-        .ADDR_WIDTH (ADDR_WIDTH),
-        .AF_THRESH  (AF_THRESH)
-    ) u_wr (
-        .clk         (wr_clk),
-        .rst_n       (rst_n_wr),
-        .enable      (wr_en),
-        .read_ptr    (rd_from_gray),    // from the read domain
-        .wr_en       (wr_en_gate),
-        .is_full     (full),
-        .is_almost   (almost_full),
-        .wr_addr     (wr_addr),
-        .wr_to_gray  (wr_to_gray)       // to the read domain
-    );
+    .ADDR_WIDTH (ADDR_WIDTH),
+    .AF_THRESH  (AF_THRESH)
+) u_wr (
+    .clk        (wr_clk),
+    .rst_n      (rst_n_wr),
+    .enable     (wr_en),
+    .read_ptr   (rd_from_gray),
+    .wr_en      (wr_en_gate),
+    .is_full    (full),
+    .is_almost  (almost_full),
+    .*
+);
 
     read_handler #(
-        .ADDR_WIDTH (ADDR_WIDTH),
-        .AE_THRESH  (AE_THRESH)
-    ) u_rd (
-        .clk         (rd_clk),
-        .rst_n       (rst_n_rd),
-        .enable      (rd_en),
-        .write_ptr   (wr_from_gray),    // from the write domain
-        .rd_en       (rd_en_gate),
-        .is_empty    (empty),
-        .is_almost   (almost_empty),
-        .rd_addr     (rd_addr),
-        .rd_to_gray  (rd_to_gray)       // to the write domain
-    );
+    .ADDR_WIDTH (ADDR_WIDTH),
+    .AE_THRESH  (AE_THRESH)
+) u_rd (
+    .clk        (rd_clk),
+    .rst_n      (rst_n_rd),
+    .enable     (rd_en),
+    .write_ptr  (wr_from_gray),
+    .rd_en      (rd_en_gate),
+    .is_empty   (empty),
+    .is_almost  (almost_empty),
+    .*
+);
 
     // Write pointer into the read domain.
     sync_clock #(
@@ -100,18 +98,13 @@ module async_fifo_top #(
     );
 
     dual_port_memory #(
-        .WIDTH      (WIDTH),
-        .ADDR_WIDTH (ADDR_WIDTH)
-    ) u_mem (
-        .wr_clk  (wr_clk),
-        .rd_clk  (rd_clk),
-        .wr_en   (wr_en_gate),
-        .rd_en   (rd_en_gate),
-        .wr_addr (wr_addr),
-        .rd_addr (rd_addr),
-        .wr_data (wr_data),
-        .rd_data (rd_data)
-    );
+    .WIDTH      (WIDTH),
+    .ADDR_WIDTH (ADDR_WIDTH)
+) u_mem (
+    .wr_en (wr_en_gate),
+    .rd_en (rd_en_gate),
+    .*
+);
 
 endmodule
 
