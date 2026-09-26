@@ -1,0 +1,35 @@
+VCS = vcs
+VCS_FLAGS = -full64 -sverilog -debug_access+all -kdb -lca
+
+SRCS = sync_fifo_part2.sv \
+       even_odd_interleaver.sv \
+       tb_even_odd_interleaver.sv
+
+TOP = tb_even_odd_interleaver
+SIMV = simv_part2
+
+all: compile
+
+compile:
+	$(VCS) $(VCS_FLAGS) $(SRCS) -top $(TOP) -o $(SIMV)
+
+case1: compile
+	./$(SIMV) +TEST=case1
+	mv -f even_odd_interleaver.fsdb case1.fsdb
+
+case4: compile
+	./$(SIMV) +TEST=case4
+	mv -f even_odd_interleaver.fsdb case4.fsdb
+
+test: case1 case4
+
+verdi_case1:
+	verdi -dbdir $(SIMV).daidir -ssf case1.fsdb -nologo &
+
+verdi_case4:
+	verdi -dbdir $(SIMV).daidir -ssf case4.fsdb -nologo &
+
+clean:
+	rm -rf $(SIMV) $(SIMV).daidir csrc \
+	       ucli.key *.log *.fsdb *.vpd \
+	       novas.conf novas.rc verdiLog
