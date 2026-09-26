@@ -1,8 +1,8 @@
 VCS       = vcs
 VCS_FLAGS = -sverilog -full64 -kdb -debug_access+all
-TOP       = tb_async_fifo
-SIM       = simv
-FSDB      = async_fifo.fsdb
+TOP       = tb_even_odd_interleaver
+SIM       = simv_even_odd_interleaver
+FSDB      = even_odd_interleaver.fsdb
 
 # Add/remove RTL source files here as needed.
 # gray_converter.sv must come first: the other RTL files import its package.
@@ -12,11 +12,12 @@ RTL       = rtl/gray_converter.sv \
             rtl/dual_port_memory.sv \
             rtl/write_handler.sv \
             rtl/read_handler.sv \
-            rtl/async_fifo_top.sv
+            rtl/async_fifo_top.sv \
+            rtl/even_odd_interleaver_top.sv
 
-TB        = tb/tb_async_fifo.sv
+TB        = tb/tb_even_odd_interleaver.sv
 
-.PHONY: all compile empty_full almost_flags simultaneous waves clean
+.PHONY: all compile sizing reverse alternating stall regress waves clean
 
 # Default: compile the design
 all: compile
@@ -25,15 +26,24 @@ all: compile
 compile:
 	$(VCS) $(VCS_FLAGS) -top $(TOP) $(RTL) $(TB) -o $(SIM)
 
-# Run tests using the existing compiled simulation
-empty_full:
-	./$(SIM) -exitstatus +TEST=empty_full
+# Run each interleaver verification case.
+sizing: compile
+	./$(SIM) -exitstatus +TEST=sizing
 
-almost_flags:
-	./$(SIM) -exitstatus +TEST=almost_flags
+reverse: compile
+	./$(SIM) -exitstatus +TEST=reverse
 
-simultaneous:
-	./$(SIM) -exitstatus +TEST=simultaneous
+alternating: compile
+	./$(SIM) -exitstatus +TEST=alternating
+
+stall: compile
+	./$(SIM) -exitstatus +TEST=stall
+
+regress: compile
+	./$(SIM) -exitstatus +TEST=sizing
+	./$(SIM) -exitstatus +TEST=reverse
+	./$(SIM) -exitstatus +TEST=alternating
+	./$(SIM) -exitstatus +TEST=stall
 
 # Run tests and open their waveform in Verdi
 waves:

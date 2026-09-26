@@ -4,7 +4,9 @@
 // Gray code conversion functions, used for pointer synchronisation across clock domains
 package gray_converter;
 
-    localparam int GRAY_W = 5;  // Must be at least the pointer width
+    // DEPTH=64 uses six address bits plus one wrap bit.
+    // This width also preserves the existing DEPTH=16 FIFO behavior.
+    localparam int GRAY_W = 7;
 
     // Binary to Gray:  g = b ^ (b >> 1)
     function automatic logic [GRAY_W-1:0] bin2gray(input logic [GRAY_W-1:0] bin);
