@@ -35,53 +35,49 @@ module async_fifo_top #(
             $error("async_fifo_top: AE_THRESH (%0d) must be in 0..DEPTH-1", AE_THRESH);
     end
 
-    // The FIFO is reset when rst_n is low, and comes out of reset synchronously to each clock
-    logic rst_n_wr, rst_n_rd;
+    // Internal signals
+    logic                  rst_n_wr, rst_n_rd;          // reset, released synchronously to each clock
+    logic [PTR_WIDTH-1:0]  wr_to_gray, rd_to_gray;      // pointers sent to the other domain, Gray coded
+    logic [PTR_WIDTH-1:0]  wr_from_gray, rd_from_gray;  // pointers received from the other domain, binary
+    logic [ADDR_WIDTH-1:0] wr_addr, rd_addr;            // memory addresses, lower bits of the pointers
+    logic                  wr_en_gate, rd_en_gate;      // requests gated by full and empty
 
+    // Reset synchronisers: asynchronous assert, synchronous release
     sync_reset u_rst_wr (.clk(wr_clk), .rst_n_in(rst_n), .rst_n_out(rst_n_wr));
     sync_reset u_rst_rd (.clk(rd_clk), .rst_n_in(rst_n), .rst_n_out(rst_n_rd));
 
-    // Write and read pointers, Gray-coded for the CDC
-    logic [PTR_WIDTH-1:0] wr_to_gray,  wr_from_gray;
-    logic [PTR_WIDTH-1:0] rd_to_gray,  rd_from_gray;
-
-    // The read and write addresses are the lower bits of the pointers,
-    logic [ADDR_WIDTH-1:0] wr_addr, rd_addr;
-    logic                  wr_en_gate, rd_en_gate;
-
+    // Write and read control
     write_handler #(
         .ADDR_WIDTH (ADDR_WIDTH),
         .AF_THRESH  (AF_THRESH)
     ) u_wr (
-        .clk         (wr_clk),
-        .rst_n       (rst_n_wr),
-        .enable      (wr_en),
-        .read_ptr    (rd_from_gray),    // from the read domain
-        .wr_en       (wr_en_gate),
-        .is_full     (full),
-        .is_almost   (almost_full),
-        .wr_addr     (wr_addr),
-        .wr_to_gray  (wr_to_gray)       // to the read domain
+        .clk        (wr_clk),
+        .rst_n      (rst_n_wr),
+        .enable     (wr_en),
+        .read_ptr   (rd_from_gray),     // from the read domain
+        .wr_en      (wr_en_gate),
+        .is_full    (full),
+        .is_almost  (almost_full),
+        .*                              // wr_addr, wr_to_gray
     );
 
     read_handler #(
         .ADDR_WIDTH (ADDR_WIDTH),
         .AE_THRESH  (AE_THRESH)
     ) u_rd (
-        .clk         (rd_clk),
-        .rst_n       (rst_n_rd),
-        .enable      (rd_en),
-        .write_ptr   (wr_from_gray),    // from the write domain
-        .rd_en       (rd_en_gate),
-        .is_empty    (empty),
-        .is_almost   (almost_empty),
-        .rd_addr     (rd_addr),
-        .rd_to_gray  (rd_to_gray)       // to the write domain
+        .clk        (rd_clk),
+        .rst_n      (rst_n_rd),
+        .enable     (rd_en),
+        .write_ptr  (wr_from_gray),     // from the write domain
+        .rd_en      (rd_en_gate),
+        .is_empty   (empty),
+        .is_almost  (almost_empty),
+        .*                              // rd_addr, rd_to_gray
     );
 
-    // Write pointer into the read domain.
+    // Write pointer into the read domain
     sync_clock #(
-        .PTR_WIDTH  (PTR_WIDTH)
+        .PTR_WIDTH (PTR_WIDTH)
     ) u_sync_wr2rd (
         .clk         (rd_clk),
         .rst_n       (rst_n_rd),
@@ -89,9 +85,9 @@ module async_fifo_top #(
         .ptr_bin_out (wr_from_gray)
     );
 
-    // Read pointer into the write domain.
+    // Read pointer into the write domain
     sync_clock #(
-        .PTR_WIDTH  (PTR_WIDTH)
+        .PTR_WIDTH (PTR_WIDTH)
     ) u_sync_rd2wr (
         .clk         (wr_clk),
         .rst_n       (rst_n_wr),
@@ -99,19 +95,24 @@ module async_fifo_top #(
         .ptr_bin_out (rd_from_gray)
     );
 
+    // Memory interface, driven from the FIFO side
+    dual_port_mem_if #(
+        .WIDTH      (WIDTH),
+        .ADDR_WIDTH (ADDR_WIDTH)
+    ) mem_if ();
+
+    assign mem_if.wr_en   = wr_en_gate;
+    assign mem_if.wr_addr = wr_addr;
+    assign mem_if.wr_data = wr_data;
+    assign mem_if.rd_en   = rd_en_gate;
+    assign mem_if.rd_addr = rd_addr;
+    assign rd_data        = mem_if.rd_data;
+
+    // Dual-port memory, on the memory side of the interface
     dual_port_memory #(
         .WIDTH      (WIDTH),
         .ADDR_WIDTH (ADDR_WIDTH)
-    ) u_mem (
-        .wr_clk  (wr_clk),
-        .rd_clk  (rd_clk),
-        .wr_en   (wr_en_gate),
-        .rd_en   (rd_en_gate),
-        .wr_addr (wr_addr),
-        .rd_addr (rd_addr),
-        .wr_data (wr_data),
-        .rd_data (rd_data)
-    );
+    ) u_mem (.*);                       // wr_clk, rd_clk, mem_if
 
 endmodule
 
