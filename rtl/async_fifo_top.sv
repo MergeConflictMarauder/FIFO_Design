@@ -3,14 +3,14 @@
 
 // Asynchronous FIFO with independent write and read clocks
 module async_fifo_top #(
-    parameter int WIDTH     = 8,
-    parameter int DEPTH     = 16,
-    parameter int AF_THRESH = 12,
-    parameter int AE_THRESH = 4
+    parameter int WIDTH     = 8,    // data word width
+    parameter int DEPTH     = 16,   // entries, must be a power of two
+    parameter int AF_THRESH = 12,   // almost_full  asserts at >= this occupancy
+    parameter int AE_THRESH = 4     // almost_empty asserts at <= this occupancy
 )(
     input  logic              wr_clk,
     input  logic              rd_clk,
-    input  logic              rst_n,
+    input  logic              rst_n,        // asynchronous, active low
     input  logic              wr_en,
     input  logic              rd_en,
     input  logic [WIDTH-1:0]  wr_data,
@@ -22,8 +22,8 @@ module async_fifo_top #(
     output logic              empty
 );
 
-    localparam int ADDR_WIDTH = $clog2(DEPTH);
-    localparam int PTR_WIDTH  = ADDR_WIDTH + 1;
+    localparam int ADDR_WIDTH = $clog2(DEPTH);      // ceiling of log2(DEPTH), address width
+    localparam int PTR_WIDTH  = ADDR_WIDTH + 1;     // pointer width, to distinguish full from empty
 
     // Parameter checks
     initial begin
@@ -33,31 +33,22 @@ module async_fifo_top #(
             $error("async_fifo_top: AF_THRESH (%0d) must be in 1..DEPTH", AF_THRESH);
         if (AE_THRESH < 0 || AE_THRESH >= DEPTH)
             $error("async_fifo_top: AE_THRESH (%0d) must be in 0..DEPTH-1", AE_THRESH);
+        if (PTR_WIDTH > gray_converter::GRAY_W)
+            $error("async_fifo_top: DEPTH (%0d) needs GRAY_W >= %0d in gray_converter.sv", DEPTH, PTR_WIDTH);
     end
 
-    // Reset synchronization
-    logic rst_n_wr, rst_n_rd;
+    // Internal signals
+    logic                  rst_n_wr, rst_n_rd;          // reset, released synchronously to each clock
+    logic [PTR_WIDTH-1:0]  wr_to_gray, rd_to_gray;      // pointers sent to the other domain, Gray coded
+    logic [PTR_WIDTH-1:0]  wr_from_gray, rd_from_gray;  // pointers received from the other domain, binary
+    logic [ADDR_WIDTH-1:0] wr_addr, rd_addr;            // memory addresses, lower bits of the pointers
+    logic                  wr_en_gate, rd_en_gate;      // requests gated by full and empty
 
-    sync_reset u_rst_wr (
-        .clk       (wr_clk),
-        .rst_n_in  (rst_n),
-        .rst_n_out (rst_n_wr)
-    );
+    // Reset synchronisers: asynchronous assert, synchronous release
+    sync_reset u_rst_wr (.clk(wr_clk), .rst_n_in(rst_n), .rst_n_out(rst_n_wr));
+    sync_reset u_rst_rd (.clk(rd_clk), .rst_n_in(rst_n), .rst_n_out(rst_n_rd));
 
-    sync_reset u_rst_rd (
-        .clk       (rd_clk),
-        .rst_n_in  (rst_n),
-        .rst_n_out (rst_n_rd)
-    );
-
-    // Write and read pointers
-    logic [PTR_WIDTH-1:0] wr_to_gray, wr_from_gray;
-    logic [PTR_WIDTH-1:0] rd_to_gray, rd_from_gray;
-
-    logic [ADDR_WIDTH-1:0] wr_addr, rd_addr;
-    logic                  wr_en_gate, rd_en_gate;
-
-    // Write-side control
+    // Write and read control
     write_handler #(
         .ADDR_WIDTH (ADDR_WIDTH),
         .AF_THRESH  (AF_THRESH)
@@ -65,14 +56,13 @@ module async_fifo_top #(
         .clk        (wr_clk),
         .rst_n      (rst_n_wr),
         .enable     (wr_en),
-        .read_ptr   (rd_from_gray),
+        .read_ptr   (rd_from_gray),     // from the read domain
         .wr_en      (wr_en_gate),
         .is_full    (full),
         .is_almost  (almost_full),
-        .*
+        .*                              // wr_addr, wr_to_gray
     );
 
-    // Read-side control
     read_handler #(
         .ADDR_WIDTH (ADDR_WIDTH),
         .AE_THRESH  (AE_THRESH)
@@ -80,14 +70,14 @@ module async_fifo_top #(
         .clk        (rd_clk),
         .rst_n      (rst_n_rd),
         .enable     (rd_en),
-        .write_ptr  (wr_from_gray),
+        .write_ptr  (wr_from_gray),     // from the write domain
         .rd_en      (rd_en_gate),
         .is_empty   (empty),
         .is_almost  (almost_empty),
-        .*
+        .*                              // rd_addr, rd_to_gray
     );
 
-    // Write pointer into read domain
+    // Write pointer into the read domain
     sync_clock #(
         .PTR_WIDTH (PTR_WIDTH)
     ) u_sync_wr2rd (
@@ -97,7 +87,7 @@ module async_fifo_top #(
         .ptr_bin_out (wr_from_gray)
     );
 
-    // Read pointer into write domain
+    // Read pointer into the write domain
     sync_clock #(
         .PTR_WIDTH (PTR_WIDTH)
     ) u_sync_rd2wr (
@@ -107,28 +97,24 @@ module async_fifo_top #(
         .ptr_bin_out (rd_from_gray)
     );
 
-    // Interface between FIFO control logic and memory
+    // Memory interface, driven from the FIFO side
     dual_port_mem_if #(
         .WIDTH      (WIDTH),
         .ADDR_WIDTH (ADDR_WIDTH)
-    ) mem_if();
+    ) mem_if ();
 
     assign mem_if.wr_en   = wr_en_gate;
-    assign mem_if.rd_en   = rd_en_gate;
     assign mem_if.wr_addr = wr_addr;
-    assign mem_if.rd_addr = rd_addr;
     assign mem_if.wr_data = wr_data;
+    assign mem_if.rd_en   = rd_en_gate;
+    assign mem_if.rd_addr = rd_addr;
+    assign rd_data        = mem_if.rd_data;
 
-    assign rd_data = mem_if.rd_data;
-
-    // Dual-port memory
+    // Dual-port memory, on the memory side of the interface
     dual_port_memory #(
         .WIDTH      (WIDTH),
         .ADDR_WIDTH (ADDR_WIDTH)
-    ) u_mem (
-        .mem_if (mem_if),
-        .*
-    );
+    ) u_mem (.*);                       // wr_clk, rd_clk, mem_if
 
 endmodule
 
