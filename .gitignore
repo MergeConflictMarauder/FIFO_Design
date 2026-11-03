@@ -24,6 +24,9 @@ env.cshrc
 simv
 simv.daidir/
 csrc/
+simv_part[12]
+simv_part[12].daidir/
+csrc_part[12]/
 ucli.key
 DVEfiles/
 vc_hdrs.h

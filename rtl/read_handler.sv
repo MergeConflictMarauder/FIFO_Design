@@ -3,7 +3,7 @@
 
 // Read-side pointer, empty flag and almost-empty flag
 module read_handler
-    import gray_converter::bin2gray;
+    import gray_converter::bin2gray, gray_converter::GRAY_W;
 #(
     parameter int ADDR_WIDTH = 4,
     parameter int AE_THRESH  = 4     // almost_empty asserts at <= this occupancy
@@ -11,7 +11,7 @@ module read_handler
     input  logic                clk,
     input  logic                rst_n,
     input  logic                enable,         // read request from the consumer
-    input  logic [ADDR_WIDTH:0] write_ptr,      // write pointer, synchronised, binary
+    input  logic [ADDR_WIDTH:0] write_ptr_sync, // write pointer, synchronised into this domain, binary
 
     output logic                  rd_en,        // gated read strobe to the memory
     output logic                  is_empty,
@@ -31,14 +31,14 @@ module read_handler
     assign rd_en = enable && !is_empty;
 
     // The pointer advances only on an accepted read
-    // i.e. 5’b0_0000 = (don’t advance), 5’b0_0001 = (advance)
+    // i.e. 5'b0_0000 = (don't advance), 5'b0_0001 = (advance)
     assign next_read = read_ptr + {{ADDR_WIDTH{1'b0}}, rd_en};
 
     // Empty when both pointers match, wrap bit included
-    assign empty = (next_read == write_ptr);
+    assign empty = (next_read == write_ptr_sync);
 
     // Almost empty after the pending read is less than or equal to the threshold
-    assign counter = write_ptr - next_read;     // i.e 0_1100 - 0_1000 = 4, 1_0000 - 0_1100 = 4
+    assign counter = write_ptr_sync - next_read;    // i.e 0_1100 - 0_1000 = 4, 1_0000 - 0_1100 = 4
     assign almost_empty = (counter <= AE_LEVEL);
 
     // Assign the lower bits of the pointer to the memory address
@@ -55,7 +55,8 @@ module read_handler
             read_ptr   <= next_read;
             is_empty   <= empty;
             is_almost  <= almost_empty;
-            rd_to_gray <= bin2gray(next_read);
+            // The package works at GRAY_W bits: widen into it, narrow back out
+            rd_to_gray <= PTR_WIDTH'(bin2gray(GRAY_W'(next_read)));
         end
     end
 
