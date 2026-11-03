@@ -53,13 +53,13 @@ module async_fifo_top #(
         .ADDR_WIDTH (ADDR_WIDTH),
         .AF_THRESH  (AF_THRESH)
     ) u_wr (
-        .clk        (wr_clk),
-        .rst_n      (rst_n_wr),
-        .enable     (wr_en),
-        .read_ptr   (rd_from_gray),     // from the read domain
-        .wr_en      (wr_en_gate),
-        .is_full    (full),
-        .is_almost  (almost_full),
+        .clk           (wr_clk),
+        .rst_n         (rst_n_wr),
+        .enable        (wr_en),
+        .read_ptr_sync (rd_from_gray),  // from the read domain
+        .wr_en         (wr_en_gate),
+        .is_full       (full),
+        .is_almost     (almost_full),
         .*                              // wr_addr, wr_to_gray
     );
 
@@ -67,13 +67,13 @@ module async_fifo_top #(
         .ADDR_WIDTH (ADDR_WIDTH),
         .AE_THRESH  (AE_THRESH)
     ) u_rd (
-        .clk        (rd_clk),
-        .rst_n      (rst_n_rd),
-        .enable     (rd_en),
-        .write_ptr  (wr_from_gray),     // from the write domain
-        .rd_en      (rd_en_gate),
-        .is_empty   (empty),
-        .is_almost  (almost_empty),
+        .clk            (rd_clk),
+        .rst_n          (rst_n_rd),
+        .enable         (rd_en),
+        .write_ptr_sync (wr_from_gray), // from the write domain
+        .rd_en          (rd_en_gate),
+        .is_empty       (empty),
+        .is_almost      (almost_empty),
         .*                              // rd_addr, rd_to_gray
     );
 
