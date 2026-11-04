@@ -2,6 +2,7 @@
 `default_nettype none
 
 // Run one test per simulation: +TEST=empty_full, +TEST=almost_flags or +TEST=simultaneous.
+// Add +INJECT_BUG to make the DUT drop every Nth write.
 // Stimulus changes on falling clock edges, so the FIFO samples stable inputs on rising edges.
 module tb_async_fifo #(
     parameter WIDTH     = 8,
@@ -22,12 +23,7 @@ module tb_async_fifo #(
     real wr_period = 10.0;
     real rd_period = 17.0;
 
-    // Scoreboard state
-    integer errors = 0;                         // errors from every check
-    integer write_count = 0;                    // writes accepted since reset
-    integer read_count = 0;                     // reads checked since reset
-    reg [WIDTH-1:0] expected [0:2*DEPTH-1];     // accepted write data, used as a circular buffer
-    reg read_pending = 0;                       // a read was accepted on the previous rd_clk edge
+    integer errors = 0;                         // errors from the flag checks in the tests
 
     // Free-running clocks
     always #(wr_period/2.0) wr_clk = ~wr_clk;
@@ -38,53 +34,14 @@ module tb_async_fifo #(
         .DEPTH(DEPTH),
         .AF_THRESH(AF_THRESH),
         .AE_THRESH(AE_THRESH)
-    ) dut (
-        .wr_clk(wr_clk),
-        .rd_clk(rd_clk),
-        .rst_n(rst_n),
-        .wr_en(wr_en),
-        .rd_en(rd_en),
-        .wr_data(wr_data),
-        .rd_data(rd_data),
-        .almost_full(almost_full),
-        .full(full),
-        .almost_empty(almost_empty),
-        .empty(empty)
-    );
+    ) dut (.*);
 
-    // Record accepted writes and check returned data.
-
-    // Write side: store the data of every write the FIFO accepts
-    always @(posedge wr_clk) begin
-        if (!rst_n)
-            write_count <= 0;
-        else if (wr_en && !full) begin
-            expected[write_count % (2*DEPTH)] <= wr_data;
-            write_count <= write_count + 1;
-        end
-    end
-
-    // Read side: rd_data is valid one rd_clk edge after an accepted read,
-    // so compare it with the oldest stored word on the following edge
-    always @(posedge rd_clk) begin
-        if (!rst_n) begin
-            read_count  <= 0;
-            read_pending <= 0;
-        end else begin
-            if (read_pending) begin
-                if (read_count >= write_count) begin    // nothing was written for this read
-                    errors = errors + 1;
-                    $error("Read occurred with no expected data");
-                end else if (rd_data !== expected[read_count % (2*DEPTH)]) begin
-                    errors = errors + 1;
-                    $error("Read data mismatch: got %0h expected %0h",
-                           rd_data, expected[read_count % (2*DEPTH)]);
-                end
-                read_count <= read_count + 1;
-            end
-            read_pending <= rd_en && !empty;            // read accepted on this edge
-        end
-    end
+    // Scoreboard: checks every accepted write and read, and the full and empty flags,
+    // against the C++ reference model (tb/fifo_checker.sv, tb/fifo_model.cpp)
+    fifo_checker #(
+        .WIDTH(WIDTH),
+        .DEPTH(DEPTH)
+    ) u_checker (.*);
 
     // Compare a value with its expected value and count a mismatch
     task check(input string name, input logic actual, input logic expected_value);
@@ -167,8 +124,14 @@ module tb_async_fifo #(
             fill_fifo;
             check("full after fill", full, 1);
 
+            // Overflow attempt: the FIFO must ignore this write
+            write_one(8'hEE);
+
             drain_fifo;
             check("empty after drain", empty, 1);
+
+            // Underflow attempt: the FIFO must ignore this read
+            read_one;
 
             // One more word: empty must clear, then return after it is read
             write_one(8'hA5);
@@ -291,10 +254,10 @@ module tb_async_fifo #(
 
         settle;                             // let the last read's data check finish
 
-        if (errors == 0)
+        if (errors + u_checker.errors == 0)
             $display("TEST PASSED: %s", test);
         else
-            $error("TEST FAILED: %s (%0d errors)", test, errors);
+            $error("TEST FAILED: %s (%0d errors)", test, errors + u_checker.errors);
 
         $finish;
     end

@@ -43,6 +43,30 @@ module async_fifo_top #(
     logic [PTR_WIDTH-1:0]  wr_from_gray, rd_from_gray;  // pointers received from the other domain, binary
     logic [ADDR_WIDTH-1:0] wr_addr, rd_addr;            // memory addresses, lower bits of the pointers
     logic                  wr_en_gate, rd_en_gate;      // requests gated by full and empty
+    logic                  wr_en_req;                   // write request, after the optional injected bug
+
+    // Simulation-only bug injection: +INJECT_BUG drops every Nth accepted write.
+    // Set N with +BUG_N=<n> (default 5).
+`ifdef SYNTHESIS
+    assign wr_en_req = wr_en;
+`else
+    bit inject_bug;
+    int bug_n     = 5;
+    int write_num = 0;                                  // writes accepted so far, dropped ones included
+
+    initial begin
+        inject_bug = $test$plusargs("INJECT_BUG");
+        void'($value$plusargs("BUG_N=%d", bug_n));
+        if (inject_bug)
+            $display("async_fifo_top: INJECTED BUG, dropping one write in every %0d", bug_n);
+    end
+
+    always @(posedge wr_clk)
+        if (wr_en && !full)
+            write_num <= write_num + 1;
+
+    assign wr_en_req = wr_en && !(inject_bug && (write_num % bug_n == bug_n - 1));
+`endif
 
     // Reset synchronisers: asynchronous assert, synchronous release
     sync_reset u_rst_wr (.clk(wr_clk), .rst_n_in(rst_n), .rst_n_out(rst_n_wr));
@@ -55,7 +79,7 @@ module async_fifo_top #(
     ) u_wr (
         .clk           (wr_clk),
         .rst_n         (rst_n_wr),
-        .enable        (wr_en),
+        .enable        (wr_en_req),
         .read_ptr_sync (rd_from_gray),  // from the read domain
         .wr_en         (wr_en_gate),
         .is_full       (full),

@@ -10,6 +10,8 @@ rtl/
                                 (parity_fifo_if, parity_fifo, even_odd_interleaver_top)
 tb/
   tb_async_fifo.sv              Self-checking FIFO testbench
+  fifo_checker.sv               FIFO checker: compares the DUT with the C++ model through DPI-C
+  fifo_model.cpp                C++ reference model of the FIFO
   tb_even_odd_interleaver.sv    Self-checking interleaver testbench
 Makefile                        Simulation of both parts with VCS and Verdi
 synth/                          Synthesis of the FIFO with Design Compiler
@@ -75,6 +77,8 @@ make empty_full       # run one test
 make test_part1       # run all FIFO tests
 make test_part2       # run all interleaver tests
 make test             # run every test
+make sim              # run all FIFO tests with the checker; same as: make test_part1
+make sim_bug          # run all FIFO tests with the injected bug (see below)
 ```
 
 A test target builds its simulator first if a source file has changed. Each
@@ -86,11 +90,48 @@ run the rest anyway.
 
 | Test | What it checks |
 |---|---|
-| `empty_full` | Empty after reset, full after 16 writes, empty again after 16 reads |
+| `empty_full` | Empty after reset, full after 16 writes, a write while full is ignored, empty again after 16 reads, a read while empty is ignored |
 | `almost_flags` | `almost_full` sets and clears at 12 words, `almost_empty` at 4 words |
-| `simultaneous` | A 64-word burst written and read at the same time, with a 7 ns write clock and a 13 ns read clock |
+| `simultaneous` | A 64-word burst written and read at the same time, with a 7 ns write clock and a 13 ns read clock; reads and writes happen while full and while empty |
 
-The scoreboard checks every word read against the data written.
+### FIFO checker (DPI-C)
+
+`tb/fifo_checker.sv` watches the DUT pins and drives a C++ reference model
+(`tb/fifo_model.cpp`) through DPI-C. VCS compiles the C++ file together with
+the SystemVerilog sources.
+
+- **Writes:** on each `wr_clk` edge with `wr_en = 1` and `full = 0`, `wr_data` is pushed into the model.
+- **Reads:** on each `rd_clk` edge with `rd_en = 1` and `empty = 0`, the model is popped.
+  The DUT's `rd_data` is valid one `rd_clk` edge later and is compared then.
+- **Flags:** `full` is compared with the model on every `wr_clk` edge and `empty`
+  on every `rd_clk` edge. The DUT clears `full` and `empty` up to 3 edges late,
+  because of the pointer synchroniser, so the checker allows `full = 1` or
+  `empty = 1` against the model for up to 4 edges in a row (one spare edge for clock
+  edges at the same time). `full = 0` while the model is full, or `empty = 0` while
+  it is empty, is an error at once.
+
+Each mismatch is reported with `$error`, with the time, expected and actual
+values. At the end the checker prints `CHECKER PASSED` or `CHECKER FAILED`, and its
+errors also make the test fail.
+
+### Bug injection
+
+`async_fifo_top` has an optional bug, for simulation only, that drops every Nth
+accepted write. It is off unless the simulator gets `+INJECT_BUG`; N is set with
+`+BUG_N=<n>` (default 5).
+
+```sh
+make sim_bug                         # every FIFO test with the bug, N = 5
+make sim_bug BUG_N=3                 # drop every 3rd write instead
+./simv_part1 +TEST=simultaneous +INJECT_BUG +BUG_N=3   # one test, run directly
+```
+
+`make sim_bug` is expected to show `CHECKER FAILED` with `rd_data` and flag
+mismatches. Each run keeps its log and waveform as `<test>_bug.log` and
+`<test>_bug.fsdb`. In `almost_flags` the dropped words are never read back, so
+the checker passes there and the test's own `almost_full`/`almost_empty` checks
+fail instead. In `simultaneous` the test waits for words that never arrive and
+ends with a timeout.
 
 ### Interleaver tests (`simv_part2`)
 
@@ -113,7 +154,12 @@ Each test saves its waveform as `<test>.fsdb`, also when it fails.
 
 ```sh
 make verdi_empty_full # or verdi_<any test name>
+verdi -dbdir simv_part1.daidir -ssf simultaneous_bug.fsdb   # a make sim_bug run
 ```
+
+The checker's signals are under `tb_async_fifo.u_checker`: `exp_full` and
+`exp_empty` (model flags), `full_lag` and `empty_lag` (edges the DUT flag has
+disagreed with the model), `rd_expect` (the word expected on `rd_data`) and `errors`.
 
 The simulators can also be run directly. The waveform is then written to
 `async_fifo.fsdb` (part 1) or `even_odd_interleaver.fsdb` (part 2):

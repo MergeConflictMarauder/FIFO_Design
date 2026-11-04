@@ -15,7 +15,8 @@ FIFO_RTL  = rtl/gray_converter.sv \
 P1_TOP    = tb_async_fifo
 P1_SIMV   = simv_part1
 P1_FSDB   = async_fifo.fsdb
-P1_SRCS   = $(FIFO_RTL) tb/tb_async_fifo.sv
+# fifo_model.cpp is the C++ reference model, compiled by VCS and called through DPI-C
+P1_SRCS   = $(FIFO_RTL) tb/fifo_model.cpp tb/fifo_checker.sv tb/tb_async_fifo.sv
 P1_TESTS  = empty_full almost_flags simultaneous
 
 # Part 2: even/odd interleaver
@@ -27,7 +28,7 @@ P2_TESTS  = case1 case4 case4_odd
 
 TESTS     = $(P1_TESTS) $(P2_TESTS)
 
-.PHONY: all compile test test_part1 test_part2 $(TESTS) $(addprefix verdi_,$(TESTS)) clean
+.PHONY: all compile test test_part1 test_part2 sim sim_bug $(TESTS) $(addprefix verdi_,$(TESTS)) clean
 
 # Each testbench writes a fixed waveform file name, so tests must not run in parallel
 .NOTPARALLEL:
@@ -64,6 +65,18 @@ $(TESTS):
 test_part1: $(P1_TESTS)
 test_part2: $(P2_TESTS)
 test: test_part1 test_part2
+
+# FIFO tests with the DPI-C checker, clean design: every test must pass
+sim: test_part1
+
+# Run the tests with the injected dropped-write bug; failures are expected.
+# Save each run's log and waveform as <test>_bug.log and <test>_bug.fsdb.
+BUG_N = 5
+sim_bug: $(P1_SIMV)
+	for t in $(P1_TESTS); do \
+	    ./$(P1_SIMV) +TEST=$$t +INJECT_BUG +BUG_N=$(BUG_N) | tee $${t}_bug.log; \
+	    mv -f $(P1_FSDB) $${t}_bug.fsdb; \
+	done
 
 # Open a test's waveform in Verdi, e.g. make verdi_case4
 $(addprefix verdi_,$(TESTS)):
