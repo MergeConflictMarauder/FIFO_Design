@@ -3,7 +3,7 @@
 /////////////////////
 // Pulls transactions from the mailbox and checks them against a reference model.
 // The model is a queue q[$] holding the words the FIFO should contain, oldest first,
-// like the C++ model in tb/DPI/model.cpp.
+// like the C++ model in tb/DPI_based/model.cpp.
 class scoreboard;
 
     mailbox #(transaction) txn_mail;

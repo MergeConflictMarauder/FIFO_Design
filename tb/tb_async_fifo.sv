@@ -1,7 +1,7 @@
 `timescale 1ns/1ps
 `default_nettype none
 
-// SV-class scoreboard classes, in tb/SV_scoreboard (the interfaces are in fifo_if.sv)
+// SV-class scoreboard classes, in tb/SV_based (the interfaces are in fifo_if.sv)
 `include "transaction.sv"
 `include "monitor.sv"
 `include "scoreboard.sv"
@@ -71,7 +71,7 @@ module tb_async_fifo #(
     assign almost_empty = rd_if_inst.almost_empty;
 
     // SV-class scoreboard: the monitor posts transactions to the mailbox,
-    // the scoreboard checks them against its queue model (tb/SV_scoreboard)
+    // the scoreboard checks them against its queue model (tb/SV_based)
     mailbox #(transaction) txn_mail;
     monitor mon;
     scoreboard sb;
@@ -92,7 +92,7 @@ module tb_async_fifo #(
     final if (sb != null) sb.report();
 
     // Scoreboard: checks every accepted write and read, and the full and empty flags,
-    // against the C++ reference model (tb/DPI/checker.sv, tb/DPI/model.cpp)
+    // against the C++ reference model (tb/DPI_based/checker.sv, tb/DPI_based/model.cpp)
     fifo_checker #(
         .WIDTH(WIDTH),
         .DEPTH(DEPTH)
