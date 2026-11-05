@@ -1,6 +1,11 @@
 `timescale 1ns/1ps
 `default_nettype none
 
+// SV-class scoreboard classes, in tb/SV_scoreboard (the interfaces are in fifo_if.sv)
+`include "transaction.sv"
+`include "monitor.sv"
+`include "scoreboard.sv"
+
 // Run one test per simulation: +TEST=empty_full, +TEST=almost_flags or +TEST=simultaneous.
 // Add +INJECT_BUG to make the DUT drop every Nth write.
 // Stimulus changes on falling clock edges, so the FIFO samples stable inputs on rising edges.
@@ -29,12 +34,62 @@ module tb_async_fifo #(
     always #(wr_period/2.0) wr_clk = ~wr_clk;
     always #(rd_period/2.0) rd_clk = ~rd_clk;
 
+    // Write-side and read-side interfaces
+    fifo_wr_if wr_if_inst(wr_clk, rst_n);
+    fifo_rd_if rd_if_inst(rd_clk, rst_n);
+
+    // The DUT is connected through the interfaces
     async_fifo_top #(
         .WIDTH(WIDTH),
         .DEPTH(DEPTH),
         .AF_THRESH(AF_THRESH),
         .AE_THRESH(AE_THRESH)
-    ) dut (.*);
+    ) dut (
+        .wr_clk(wr_clk),
+        .rd_clk(rd_clk),
+        .rst_n(rst_n),
+        .wr_en(wr_if_inst.wr_en),
+        .wr_data(wr_if_inst.wr_data),
+        .full(wr_if_inst.full),
+        .almost_full(wr_if_inst.almost_full),
+        .rd_en(rd_if_inst.rd_en),
+        .rd_data(rd_if_inst.rd_data),
+        .empty(rd_if_inst.empty),
+        .almost_empty(rd_if_inst.almost_empty)
+    );
+
+    // The stimulus drives these testbench signals into the interfaces...
+    assign wr_if_inst.wr_en   = wr_en;
+    assign wr_if_inst.wr_data = wr_data;
+    assign rd_if_inst.rd_en   = rd_en;
+
+    // ...and the tests and the DPI checker read the DUT outputs from them
+    assign full         = wr_if_inst.full;
+    assign almost_full  = wr_if_inst.almost_full;
+    assign rd_data      = rd_if_inst.rd_data;
+    assign empty        = rd_if_inst.empty;
+    assign almost_empty = rd_if_inst.almost_empty;
+
+    // SV-class scoreboard: the monitor posts transactions to the mailbox,
+    // the scoreboard checks them against its queue model (tb/SV_scoreboard)
+    mailbox #(transaction) txn_mail;
+    monitor mon;
+    scoreboard sb;
+
+    initial begin
+        mon = new(wr_if_inst, rd_if_inst);
+        sb = new(DEPTH);
+        txn_mail = new();
+        mon.txn_mail = txn_mail;
+        sb.txn_mail = txn_mail;
+        fork
+            mon.run();
+            sb.run();
+        join
+    end
+
+    // Print the scoreboard's pass/fail summary at the end of the simulation
+    final if (sb != null) sb.report();
 
     // Scoreboard: checks every accepted write and read, and the full and empty flags,
     // against the C++ reference model (tb/DPI/checker.sv, tb/DPI/model.cpp)
@@ -254,10 +309,10 @@ module tb_async_fifo #(
 
         settle;                             // let the last read's data check finish
 
-        if (errors + u_checker.errors == 0)
+        if (errors + u_checker.errors + sb.errors == 0)
             $display("TEST PASSED: %s", test);
         else
-            $error("TEST FAILED: %s (%0d errors)", test, errors + u_checker.errors);
+            $error("TEST FAILED: %s (%0d errors)", test, errors + u_checker.errors + sb.errors);
 
         $finish;
     end

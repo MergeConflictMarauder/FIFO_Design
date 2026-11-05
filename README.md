@@ -14,6 +14,11 @@ tb/
   DPI/
     checker.sv                  FIFO checker: compares the DUT with the C++ model through DPI-C
     model.cpp                   C++ reference model of the FIFO
+  SV_scoreboard/
+    fifo_if.sv                  Write-side and read-side interfaces to the FIFO
+    transaction.sv              Transaction class: one write, read or reset
+    monitor.sv                  Monitor class: turns pin activity into transactions, with logging
+    scoreboard.sv               Scoreboard class: checks transactions against a queue model
 Makefile                        Simulation of both parts with VCS and Verdi
 synth/                          Synthesis of the FIFO with Design Compiler
   compile_dc.tcl                Synthesis script: sources, clocks, constraints, reports
@@ -114,6 +119,31 @@ the SystemVerilog sources.
 Each mismatch is reported with `$error`, with the time, expected and actual
 values. At the end the checker prints `CHECKER PASSED` or `CHECKER FAILED`, and its
 errors also make the test fail.
+
+### SV-class scoreboard
+
+`tb/SV_scoreboard` holds a second, class-based checker that runs in the same
+simulation as the DPI-C checker, on the same stimulus. The DUT is connected
+through two interfaces, `fifo_wr_if` and `fifo_rd_if`.
+
+- **Monitor:** creates a `transaction` (kind, data, timestamp) for every accepted
+  write, every accepted read and every reset, and posts it to a mailbox. A read's
+  `rd_data` is captured on the falling `rd_clk` edge after the read.
+- **Scoreboard:** takes each transaction from the mailbox and updates a queue model
+  `q[$]`. A write pushes its word; a read pops the oldest word and compares it with
+  the read data; a reset empties the queue. A write while the queue holds `DEPTH`
+  words (overflow) or a read while it is empty (underflow) is also an error.
+
+Mismatches are reported with `$error`. At the end it prints `SV SCOREBOARD PASSED`
+or `SV SCOREBOARD FAILED`, and its errors also make the test fail.
+
+The monitor's log is set with `+LOG=<n>`: `0` off (default), `1` one line per
+transaction with its timestamp, `2` every field of the transaction.
+
+```sh
+./simv_part1 +TEST=empty_full +LOG=1
+./simv_part1 +TEST=simultaneous +LOG=2 +INJECT_BUG
+```
 
 ### Bug injection
 

@@ -16,7 +16,9 @@ P1_TOP    = tb_async_fifo
 P1_SIMV   = simv_part1
 P1_FSDB   = async_fifo.fsdb
 # tb/DPI/model.cpp is the C++ reference model, compiled by VCS and called through DPI-C
-P1_SRCS   = $(FIFO_RTL) tb/DPI/model.cpp tb/DPI/checker.sv tb/tb_async_fifo.sv
+P1_SRCS   = $(FIFO_RTL) tb/DPI/model.cpp tb/DPI/checker.sv tb/SV_scoreboard/fifo_if.sv tb/tb_async_fifo.sv
+# SV-class scoreboard classes: `included by tb_async_fifo.sv, listed here so an edit triggers a rebuild
+P1_INCS   = tb/SV_scoreboard/transaction.sv tb/SV_scoreboard/monitor.sv tb/SV_scoreboard/scoreboard.sv
 P1_TESTS  = empty_full almost_flags simultaneous
 
 # Part 2: even/odd interleaver
@@ -40,8 +42,8 @@ compile: $(P1_SIMV) $(P2_SIMV)
 
 # Rebuild a simulator only when one of its source files changes.
 # Each build keeps its own VCS work directory, so the two do not overwrite each other.
-$(P1_SIMV): $(P1_SRCS)
-	$(VCS) $(VCS_FLAGS) -Mdir=csrc_part1 $(P1_SRCS) -top $(P1_TOP) -o $@
+$(P1_SIMV): $(P1_SRCS) $(P1_INCS)
+	$(VCS) $(VCS_FLAGS) +incdir+tb/SV_scoreboard -Mdir=csrc_part1 $(P1_SRCS) -top $(P1_TOP) -o $@
 
 $(P2_SIMV): $(P2_SRCS)
 	$(VCS) $(VCS_FLAGS) -Mdir=csrc_part2 $(P2_SRCS) -top $(P2_TOP) -o $@
