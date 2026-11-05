@@ -1,36 +1,25 @@
+// Import the C functions using DPI (C++ reference model in model.cpp)
+import "DPI-C" function void fifo_init(int fifo_depth, int fifo_width);
+import "DPI-C" function void fifo_push(int data);
+import "DPI-C" function int  fifo_pop();
+import "DPI-C" function int  fifo_is_empty();
+import "DPI-C" function int  fifo_is_full();
+
 `timescale 1ns/1ps
-`default_nettype none
 
-// Compares async_fifo_top with the C++ reference model in tb/fifo_model.cpp.
-// Accepted writes and reads update the model on their respective clock edges.
-// Read data is checked one rd_clk edge later; full and empty are checked on
-// every wr_clk and rd_clk edge, respectively.
-module fifo_checker #(
-    parameter int WIDTH = 8,
-    parameter int DEPTH = 16
-)(
-    input logic             wr_clk,
-    input logic             rd_clk,
-    input logic             rst_n,
-    input logic             wr_en,
-    input logic             rd_en,
-    input logic [WIDTH-1:0] wr_data,
-    input logic [WIDTH-1:0] rd_data,
-    input logic             full,
-    input logic             empty
-);
+/////////////////////
+// Checks async_fifo_top against the C++ model. Accepted operations update the
+// model on their clock edges; read data is checked one rd_clk edge later.
+// Full and empty are checked on every wr_clk and rd_clk edge, respectively.
+//////////////////////
+module fifo_checker #(parameter int WIDTH = 8, parameter int DEPTH = 16)
+                     (input wr_clk, input rd_clk, input rst_n,
+                      input wr_en, input logic [WIDTH-1:0] wr_data, input full,
+                      input rd_en, input logic [WIDTH-1:0] rd_data, input empty);
 
-    // C++ model functions, in tb/fifo_model.cpp
-    import "DPI-C" function void fifo_init(input int fifo_depth, input int fifo_width);
-    import "DPI-C" function void fifo_push(input int data);
-    import "DPI-C" function int  fifo_pop();
-    import "DPI-C" function int  fifo_is_empty();
-    import "DPI-C" function int  fifo_is_full();
-
-    // Allow four checking-clock edges for flag updates: two-flop pointer
-    // synchronisation, flag registration, and a simultaneous opposite-clock update.
-    // Tolerate only pessimistic mismatches (full with room or empty with data);
-    // optimistic mismatches could cause overflow or underflow and fail immediately.
+    // Allow four clock edges for synchronized flags to update. Ignore temporary
+    // pessimistic mismatches; fail immediately on optimistic mismatches that could
+    // permit overflow or underflow.
     localparam int FLAG_LAG = 4;
 
     // Checker state, visible in the waveform under u_checker
@@ -53,7 +42,8 @@ module fifo_checker #(
     endfunction
 
     // Write side
-    always @(posedge wr_clk) begin
+    always begin
+        @(posedge wr_clk);
         if (!rst_n) begin
             fifo_init(DEPTH, WIDTH);    // empty the model while the DUT is in reset
             full_lag = 0;
@@ -76,13 +66,13 @@ module fifo_checker #(
     end
 
     // Read side
-    always @(posedge rd_clk) begin
+    always begin
+        @(posedge rd_clk);
         if (!rst_n) begin
             rd_check  = 0;
             empty_lag = 0;
         end else begin
-            // 1. rd_data is valid one rd_clk edge after the read was accepted:
-            //    compare it now with the word the model returned on the previous edge
+            // 1. Check data from the read accepted on the previous rd_clk edge.
             if (rd_check) begin
                 reads = reads + 1;
                 if (rd_data !== rd_expect) begin
@@ -116,5 +106,3 @@ module fifo_checker #(
     end
 
 endmodule
-
-`default_nettype wire

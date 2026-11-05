@@ -37,7 +37,7 @@ module tb_async_fifo #(
     ) dut (.*);
 
     // Scoreboard: checks every accepted write and read, and the full and empty flags,
-    // against the C++ reference model (tb/fifo_checker.sv, tb/fifo_model.cpp)
+    // against the C++ reference model (tb/DPI/checker.sv, tb/DPI/model.cpp)
     fifo_checker #(
         .WIDTH(WIDTH),
         .DEPTH(DEPTH)

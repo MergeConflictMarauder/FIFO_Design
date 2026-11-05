@@ -10,9 +10,10 @@ rtl/
                                 (parity_fifo_if, parity_fifo, even_odd_interleaver_top)
 tb/
   tb_async_fifo.sv              Self-checking FIFO testbench
-  fifo_checker.sv               FIFO checker: compares the DUT with the C++ model through DPI-C
-  fifo_model.cpp                C++ reference model of the FIFO
   tb_even_odd_interleaver.sv    Self-checking interleaver testbench
+  DPI/
+    checker.sv                  FIFO checker: compares the DUT with the C++ model through DPI-C
+    model.cpp                   C++ reference model of the FIFO
 Makefile                        Simulation of both parts with VCS and Verdi
 synth/                          Synthesis of the FIFO with Design Compiler
   compile_dc.tcl                Synthesis script: sources, clocks, constraints, reports
@@ -96,8 +97,8 @@ run the rest anyway.
 
 ### FIFO checker (DPI-C)
 
-`tb/fifo_checker.sv` watches the DUT pins and drives a C++ reference model
-(`tb/fifo_model.cpp`) through DPI-C. VCS compiles the C++ file together with
+`tb/DPI/checker.sv` watches the DUT pins and drives a C++ reference model
+(`tb/DPI/model.cpp`) through DPI-C. VCS compiles the C++ file together with
 the SystemVerilog sources.
 
 - **Writes:** on each `wr_clk` edge with `wr_en = 1` and `full = 0`, `wr_data` is pushed into the model.

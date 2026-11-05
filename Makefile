@@ -15,8 +15,8 @@ FIFO_RTL  = rtl/gray_converter.sv \
 P1_TOP    = tb_async_fifo
 P1_SIMV   = simv_part1
 P1_FSDB   = async_fifo.fsdb
-# fifo_model.cpp is the C++ reference model, compiled by VCS and called through DPI-C
-P1_SRCS   = $(FIFO_RTL) tb/fifo_model.cpp tb/fifo_checker.sv tb/tb_async_fifo.sv
+# tb/DPI/model.cpp is the C++ reference model, compiled by VCS and called through DPI-C
+P1_SRCS   = $(FIFO_RTL) tb/DPI/model.cpp tb/DPI/checker.sv tb/tb_async_fifo.sv
 P1_TESTS  = empty_full almost_flags simultaneous
 
 # Part 2: even/odd interleaver

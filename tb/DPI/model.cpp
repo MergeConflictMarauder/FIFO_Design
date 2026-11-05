@@ -1,7 +1,7 @@
 // Golden reference model of the asynchronous FIFO, called from SystemVerilog through DPI-C.
 //
 // The model has no clocks: a write or read takes effect as soon as the checker
-// calls fifo_push() or fifo_pop(). The checker (tb/fifo_checker.sv) calls them on
+// calls fifo_push() or fifo_pop(). The checker (checker.sv) calls them on
 // the clock edges where the DUT accepts a write or a read.
 //
 // Data is passed as a 32-bit int, so WIDTH can be at most 32.
