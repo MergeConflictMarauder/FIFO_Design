@@ -62,6 +62,29 @@ module tb_even_odd_interleaver #(
         .FIFO_DEPTH (FIFO_DEPTH)
     ) dut (.*);
 
+    // Lab 4 Part 4: passive assertion interface
+    even_odd_sva_if sva_if_inst (
+        .wr_clk          (wr_clk),
+        .rd_clk          (rd_clk),
+        .rst_n_wr        (dut.rst_n_wr),
+        .rst_n_rd        (dut.rst_n_rd),
+        .wr_en           (wr_en),
+        .wr_data_lsb     (wr_data[0]),
+        .even_wr_en      (dut.even_if.wr_en),
+        .odd_wr_en       (dut.odd_if.wr_en),
+        .rd_en           (rd_en),
+        .even_empty      (dut.even_if.empty),
+        .odd_empty       (dut.odd_if.empty),
+        .even_rd_en      (dut.even_if.rd_en),
+        .odd_rd_en       (dut.odd_if.rd_en),
+        .issue_read      (dut.issue_read),
+        .next_is_even    (dut.next_is_even),
+        .pending         (dut.pending),
+        .pending_is_even (dut.pending_is_even),
+        .rd_data         (rd_data),
+        .rd_valid        (rd_valid)
+    );
+
     // Write side: record each accepted input and track FIFO occupancy.
     // A write while the target FIFO is full would be dropped, so it is an error.
     always @(posedge wr_clk) begin
@@ -414,6 +437,7 @@ module tb_even_odd_interleaver #(
 
         $fsdbDumpfile("even_odd_interleaver.fsdb");
         $fsdbDumpvars(0, tb_even_odd_interleaver);
+        $fsdbDumpSVA;
 
         case (test)
             "case1":     test_case1;
