@@ -1,21 +1,21 @@
-# FIFO_Design
-
-Design and verification of an asynchronous FIFO (Part 1) and an even/odd
-interleaver built from two of those FIFOs (Part 2).
+Design and verification of an asynchronous FIFO and an even/odd interleaver
+from Lab 1. Lab 4 adds a verification environment for the asynchronous FIFO
+(`async_fifo_top`) to the Lab 1 testbench (`tb_async_fifo.sv`): a DPI-based
+checker and an SV-based scoreboard. Assertion-based verification is planned.
 
 ## Repository layout
 
 ```text
 rtl/                            Design
-  async_fifo_top.sv ...           Part 1: asynchronous FIFO
-  even_odd_interleaver_top.sv     Part 2: interleaver
+  async_fifo_top.sv ...           Lab 1 Part 1: asynchronous FIFO
+  even_odd_interleaver_top.sv     Lab 1 Part 2: interleaver
 tb/                             Verification
-  tb_async_fifo.sv                Part 1 testbench (stimulus and tests)
-  tb_even_odd_interleaver.sv      Part 2 testbench
-  DPI_based/                      DPI-C checker
+  tb_async_fifo.sv                Lab 1 Part 1 testbench (stimulus and tests)
+  tb_even_odd_interleaver.sv      Lab 1 Part 2 testbench
+  DPI_based/                      Lab 4: DPI-C checker
     checker.sv                      Compares the DUT with the C++ model
     model.cpp                       C++ reference model
-  SV_based/                       SV class-based scoreboard
+  SV_based/                       Lab 4: SV class-based scoreboard
     fifo_if.sv                      Write-side and read-side interfaces
     transaction.sv                  One write, read or reset
     monitor.sv                      Turns pin activity into transactions
@@ -34,9 +34,10 @@ FreePDK45 installation. Run every `make` command from `FIFO_Design/`.
 
 ```sh
 make                  # build both simulators (simv_part1, simv_part2)
-make sim              # run all FIFO tests (Part 1), no bug: all must pass
-make sim_bug          # run all FIFO tests with the injected bug: checkers must fail
-make test_part2       # run all interleaver tests (Part 2)
+make sim              # Lab 4: run all FIFO tests (Lab 1 Part 1) with both checkers
+make sim_bug          # Lab 4: same tests with the injected bug: checkers must fail
+make test_part1       # Lab 1 Part 1: run all FIFO tests (same as make sim)
+make test_part2       # Lab 1 Part 2: run all interleaver tests
 make test             # run every test
 make empty_full       # run one test (any test name works)
 make verdi_empty_full # open that test's waveform in Verdi
@@ -46,10 +47,10 @@ make clean            # remove simulators, logs and waveforms
 Each test prints `TEST PASSED` or `TEST FAILED`; a failure stops `make`
 (use `make -k` to keep going).
 
-## Part 1: Asynchronous FIFO
-
-### Design
-
+---
+# Lab 1 FIFO Design
+### Part 1: Asynchronous FIFO
+#### Design
 Independent write and read clocks. Pointers cross between the clock domains in
 Gray code through 2-flop synchronisers. Writes while `full` and reads while
 `empty` are ignored, and `rd_data` is valid one read-clock cycle after a read.
@@ -61,18 +62,52 @@ Gray code through 2-flop synchronisers. Writes while `full` and reads while
 | `AF_THRESH` | 12 | `almost_full` at this many words or more |
 | `AE_THRESH` | 4 | `almost_empty` at this many words or fewer |
 
-### Tests
-
+#### Tests
 | Test | What it does |
 |---|---|
 | `empty_full` | Fill to full, write while full, drain to empty, read while empty |
 | `almost_flags` | `almost_full` and `almost_empty` set and clear at their thresholds |
 | `simultaneous` | 64 words written and read at the same time (7 ns write clock, 13 ns read clock) |
 
+### Part 2: Even/odd interleaver
+#### Design
+Writes go to an even or odd FIFO by bit 0 of `wr_data`. Reads alternate even,
+odd, even, starting with even; if the next parity is empty, the reader waits
+for it. `rd_data` is valid while `rd_valid` is high.
+
+| Parameter | Default | Meaning |
+|---|---|---|
+| `WIDTH` | 8 | Data width |
+| `FIFO_DEPTH` | 64 | Entries in each FIFO |
+| `FIRST_EVEN` | 1 | Parity of the first output |
+
+`FIFO_DEPTH` is 64 because the worst case (Case 4) needs 48 words (49 measured,
+one extra for the synchroniser delay), rounded up to a power of two.
+
+#### Tests
+| Test | Stimulus |
+|---|---|
+| `case1` | 80 writes at the start of each 100-cycle block |
+| `case4` | 160 back-to-back writes, long burst on the even FIFO |
+| `case4_odd` | Same as `case4`, long burst on the odd FIFO |
+
+Each test checks the write and read rates, data order, even/odd alternation and
+that no write hits a full FIFO, and prints the peak occupancy of both FIFOs.
+
+---
+# Lab 4 FIFO Verification
+
+Lab 4 also changed these Lab 1 files:
+
+- `tb/tb_async_fifo.sv`: connects the DUT through the two interfaces, hooks up
+  both checkers, and adds a write-while-full and a read-while-empty attempt to `empty_full`.
+- `rtl/async_fifo_top.sv`: optional injected bug (`+INJECT_BUG`, simulation only).
+- `Makefile`: builds the Lab 4 files into `simv_part1`, and adds `sim` and `sim_bug`.
+
 ### Checkers
 
-Both checkers run in every Part 1 simulation, on the same stimulus. Their errors
-make the test fail.
+Both checkers run in every Part 1 FIFO test (`simv_part1`), on the same stimulus.
+Their errors make the test fail.
 
 - **DPI-C checker** (`tb/DPI_based`): on each clock edge, copies accepted writes and
   reads into the C++ model, compares `rd_data`, and compares `full`/`empty` with
@@ -126,34 +161,6 @@ verdi -dbdir simv_part1.daidir -ssf async_fifo.fsdb &       # a direct run
 Useful signals: the pins in `tb_async_fifo.wr_if_inst` and `tb_async_fifo.rd_if_inst`,
 and the DPI checker state in `tb_async_fifo.u_checker` (`exp_full`, `exp_empty`,
 `rd_expect`, `errors`).
-
-## Part 2: Even/odd interleaver
-
-### Design
-
-Writes go to an even or odd FIFO by bit 0 of `wr_data`. Reads alternate even,
-odd, even, starting with even; if the next parity is empty, the reader waits
-for it. `rd_data` is valid while `rd_valid` is high.
-
-| Parameter | Default | Meaning |
-|---|---|---|
-| `WIDTH` | 8 | Data width |
-| `FIFO_DEPTH` | 64 | Entries in each FIFO |
-| `FIRST_EVEN` | 1 | Parity of the first output |
-
-`FIFO_DEPTH` is 64 because the worst case (Case 4) needs 48 words (49 measured,
-one extra for the synchroniser delay), rounded up to a power of two.
-
-### Tests
-
-| Test | Stimulus |
-|---|---|
-| `case1` | 80 writes at the start of each 100-cycle block |
-| `case4` | 160 back-to-back writes, long burst on the even FIFO |
-| `case4_odd` | Same as `case4`, long burst on the odd FIFO |
-
-Each test checks the write and read rates, data order, even/odd alternation and
-that no write hits a full FIFO, and prints the peak occupancy of both FIFOs.
 
 ## Synthesis
 
