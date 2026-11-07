@@ -23,7 +23,7 @@ P1_SRCS   = $(FIFO_RTL) tb/DPI_based/model.cpp tb/DPI_based/checker.sv tb/SV_bas
 P1_INCS   = tb/SV_based/transaction.sv tb/SV_based/monitor.sv tb/SV_based/scoreboard.sv
 P1_TESTS  = empty_full almost_flags simultaneous
 
-# Part 2: even/odd interleaver with Lab 4 SVA
+# Even/odd interleaver with SVA
 P2_TOP    = tb_even_odd_interleaver
 P2_SIMV   = simv_part2
 P2_FSDB   = even_odd_interleaver.fsdb
@@ -33,7 +33,7 @@ P2_TESTS  = case1 case4 case4_odd
 
 TESTS     = $(P1_TESTS) $(P2_TESTS)
 
-.PHONY: all compile test test_part1 test_part2 sim sim_bug $(TESTS) $(addprefix verdi_,$(TESTS)) clean
+.PHONY: all compile test test_part1 test_part2 sim sim_bug sim_sva_bug $(TESTS) $(addprefix verdi_,$(TESTS)) clean
 
 # Each testbench writes a fixed waveform name.
 .NOTPARALLEL:
@@ -72,12 +72,19 @@ test: test_part1 test_part2
 # Normal DPI-C verification.
 sim: test_part1
 
-# Part 2 dropped-write bug injection.
 BUG_N = 5
 sim_bug: $(P1_SIMV)
 	for t in $(P1_TESTS); do \
 	    ./$(P1_SIMV) +TEST=$$t +INJECT_BUG +BUG_N=$(BUG_N) | tee $${t}_bug.log; \
 	    mv -f $(P1_FSDB) $${t}_bug.fsdb; \
+	done
+
+# Interleaver tests with the SVA bug (+INJECT_SVA_BUG): assertion A7 is expected to fail.
+# Each run keeps its log and waveform as <test>_sva_bug.log and <test>_sva_bug.fsdb.
+sim_sva_bug: $(P2_SIMV)
+	for t in $(P2_TESTS); do \
+	    ./$(P2_SIMV) +TEST=$$t +INJECT_SVA_BUG | tee $${t}_sva_bug.log; \
+	    mv -f $(P2_FSDB) $${t}_sva_bug.fsdb; \
 	done
 
 # Open waveforms in Verdi.

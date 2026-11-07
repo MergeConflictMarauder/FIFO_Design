@@ -120,14 +120,23 @@ module even_odd_interleaver_top #(
 
 `ifndef SYNTHESIS
 
+    // With +INJECT_SVA_BUG, rd_valid is dropped for every 40th accepted read,
+    // so that output word is lost and assertion A7 fails.
+    localparam int SVA_BUG_N = 40;
+
     bit inject_sva_bug;
+    int read_num = 0;           // accepted reads so far (pending cycles)
 
     initial begin
         inject_sva_bug = $test$plusargs("INJECT_SVA_BUG");
 
         if (inject_sva_bug)
-            $display("SVA INJECTED BUG: corrupting rd_valid");
+            $display("SVA INJECTED BUG: dropping rd_valid for one read in every %0d", SVA_BUG_N);
     end
+
+    always @(posedge rd_clk)
+        if (pending)
+            read_num <= read_num + 1;
 
 `endif
 
@@ -167,7 +176,7 @@ module even_odd_interleaver_top #(
             // rd_valid follows pending.
             //
             // Fault injection:
-            // Invert rd_valid to trigger assertion A7.
+            // Drop rd_valid for every SVA_BUG_N-th read to trigger assertion A7.
 
 `ifdef SYNTHESIS
 
@@ -175,7 +184,8 @@ module even_odd_interleaver_top #(
 
 `else
 
-            rd_valid <= inject_sva_bug ? !pending : pending;
+            rd_valid <= pending &&
+                        !(inject_sva_bug && (read_num % SVA_BUG_N == SVA_BUG_N - 1));
 
 `endif
 

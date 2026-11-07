@@ -1,7 +1,8 @@
 Design and verification of an asynchronous FIFO and an even/odd interleaver
 from Lab 1. Lab 4 adds a verification environment for the asynchronous FIFO
 (`async_fifo_top`) to the Lab 1 testbench (`tb_async_fifo.sv`): a DPI-based
-checker and an SV-based scoreboard. Assertion-based verification is planned.
+checker and an SV-based scoreboard. It also adds SystemVerilog assertions (SVA)
+for the even/odd interleaver to the Lab 1 testbench (`tb_even_odd_interleaver.sv`).
 
 ## Repository layout
 
@@ -20,6 +21,8 @@ tb/                             Verification
     transaction.sv                  One write, read or reset
     monitor.sv                      Turns pin activity into transactions
     scoreboard.sv                   Checks transactions against a queue model
+  SVA/                            Lab 4: assertions for the interleaver
+    even_odd_sva_if.sv              Interface holding the assertions
 synth/                          Synthesis with Design Compiler
 Makefile                        Simulation with VCS and Verdi
 ```
@@ -37,7 +40,8 @@ make                  # build both simulators (simv_part1, simv_part2)
 make sim              # Lab 4: run all FIFO tests (Lab 1 Part 1) with both checkers
 make sim_bug          # Lab 4: same tests with the injected bug: checkers must fail
 make test_part1       # Lab 1 Part 1: run all FIFO tests (same as make sim)
-make test_part2       # Lab 1 Part 2: run all interleaver tests
+make test_part2       # Lab 1 Part 2: run all interleaver tests (with the Lab 4 assertions)
+make sim_sva_bug      # Lab 4: interleaver tests with the SVA bug: assertion A7 must fail
 make test             # run every test
 make empty_full       # run one test (any test name works)
 make verdi_empty_full # open that test's waveform in Verdi
@@ -102,7 +106,10 @@ Lab 4 also changed these Lab 1 files:
 - `tb/tb_async_fifo.sv`: connects the DUT through the two interfaces, hooks up
   both checkers, and adds a write-while-full and a read-while-empty attempt to `empty_full`.
 - `rtl/async_fifo_top.sv`: optional injected bug (`+INJECT_BUG`, simulation only).
-- `Makefile`: builds the Lab 4 files into `simv_part1`, and adds `sim` and `sim_bug`.
+- `tb/tb_even_odd_interleaver.sv`: connects the SVA interface and dumps the assertions to the waveform.
+- `rtl/even_odd_interleaver_top.sv`: optional injected bug (`+INJECT_SVA_BUG`, simulation only).
+- `Makefile`: builds the Lab 4 files into `simv_part1` and `simv_part2`, and adds
+  `sim`, `sim_bug` and `sim_sva_bug`.
 
 ### Checkers
 
@@ -161,6 +168,39 @@ verdi -dbdir simv_part1.daidir -ssf async_fifo.fsdb &       # a direct run
 Useful signals: the pins in `tb_async_fifo.wr_if_inst` and `tb_async_fifo.rd_if_inst`,
 and the DPI checker state in `tb_async_fifo.u_checker` (`exp_full`, `exp_empty`,
 `rd_expect`, `errors`).
+
+### Assertions (SVA)
+
+`tb/SVA/even_odd_sva_if.sv` is a passive interface with the assertions for the
+even/odd interleaver. The testbench connects it to the DUT's internal signals
+through hierarchical references (for example `dut.issue_read`), and it runs in
+every interleaver test (`simv_part2`).
+
+| Assertion | Checks |
+|---|---|
+| A1 | Each write goes to exactly one FIFO, chosen by bit 0 of `wr_data` |
+| A2 | A read strobes only one FIFO |
+| A3 | A read goes to the current parity, and that FIFO is not empty |
+| A4 | If the current parity's FIFO is empty, the reader waits instead of skipping |
+| A5 | The parity turn alternates after each read |
+| A6 | The parity turn holds when there is no read |
+| A7 | `rd_valid` follows an accepted read one cycle later, and never rises without one |
+| A8 | The parity of each output word matches the FIFO it was read from |
+
+Each assertion also has a `cover` that counts how often its condition occurred;
+the counts are printed at the end of the simulation.
+
+`+INJECT_SVA_BUG` drops `rd_valid` for every 40th accepted read, so that word is
+lost (simulation only).
+
+```sh
+make sim_sva_bug                          # all interleaver tests with the bug
+./simv_part2 +TEST=case1 +INJECT_SVA_BUG  # one test, run directly
+```
+
+Expected: `SVA_ASSERT A7: accepted read did not produce rd_valid`, 4 times per test
+(in `case1` first at 698 ns). The testbench's own output checks also fail. Logs and
+waveforms are kept as `<test>_sva_bug.log` and `<test>_sva_bug.fsdb`.
 
 ## Synthesis
 
